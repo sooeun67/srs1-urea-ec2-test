@@ -267,6 +267,29 @@ def main() -> None:
     ].copy()
     print("📊 S3 필터 후 포인트 수:", len(df_raw))
 
+    # 요청: 20초 구간의 S3 원시 1초 데이터 20행 모두 출력 (UTC)
+    try:
+        wanted_cols = [
+            c
+            for c in [
+                time_col,
+                "_time_gateway",
+                "BR1_EO_O2_A",
+                "SNR_PMP_UW_S_1",
+                "ICF_CCS_FG_T_1",
+                "ICF_SCS_FG_T_1",
+                "ICF_TMS_NOX_A",
+                "ACC_SNR_AI_1A",
+                # "ACT_STATUS",
+            ]
+            if c in df_raw.columns
+        ]
+        with pd.option_context("display.max_rows", None, "display.max_columns", None):
+            print("\n🗒️ S3 원시 1초 데이터(20초 구간, UTC):")
+            print(df_raw.sort_values(time_col)[wanted_cols].reset_index(drop=True))
+    except Exception:
+        pass
+
     # 5초 요약 (S3)
     s3_agg = aggregate_5s(df_raw)
 
