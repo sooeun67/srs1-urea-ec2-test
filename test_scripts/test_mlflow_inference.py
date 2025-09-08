@@ -13,6 +13,10 @@ test_mlflow_inference.py
   - MODEL_LOCAL_DIR: 수동 복사한 모델 디렉토리 지정 시 MLflow 다운로드 우회
     (미지정 시, 프로젝트 내 mlflow_artifacts/<RUN_ID>/urea_gp_model 경로 자동 탐색)
 
+  - START_TIME_KST: 절대 시작시각(KST) 지정 시 사용 (예: "2025-08-27 09:00:00")
+    - 지정 시: [START_TIME_KST, START_TIME_KST + INFLUX_WINDOW] 구간만 조회
+    - 미지정 시: [now() - INFLUX_WINDOW, now()] 구간 조회
+
   - INFLUX_HOST (기본: 10.238.27.132)
   - INFLUX_PORT (기본: 8086)
   - INFLUX_USERNAME (기본: read_user)
@@ -199,9 +203,10 @@ def query_recent_influx() -> pd.DataFrame:
     password = get_env("INFLUX_PASSWORD", "!Skepinfluxuser25")
     database = get_env("INFLUX_DB", "SRS1")
     measurement = get_env("INFLUX_MEASUREMENT", "SRS1")
-    # 요구사항: 최근 20초 조회 (초당 1포인트 가정 → 20개)
+    # 요구사항: 최근 20초 조회 (초당 1포인트 가정 → 20개) 또는 절대 시작시각 기반 조회
     window = get_env("INFLUX_WINDOW", "20s")
     limit = int(get_env("INFLUX_LIMIT", "200"))
+    start_time_kst = get_env("START_TIME_KST", "").strip()
 
     client = InfluxDBClient(
         host=host,
@@ -212,11 +217,37 @@ def query_recent_influx() -> pd.DataFrame:
         timeout=30,
     )
 
-    query = (
-        f'\nSELECT * FROM "{measurement}" '
-        f"WHERE time >= now() - {window} AND time <= now() "
-        f"ORDER BY time DESC LIMIT {limit}\n"
-    )
+    # 절대 시작시각이 지정되면 해당 구간만 조회
+    if start_time_kst:
+        try:
+            start_kst = pd.to_datetime(start_time_kst).tz_localize("Asia/Seoul")
+        except Exception:
+            start_kst = pd.to_datetime(start_time_kst).tz_convert("Asia/Seoul")
+        # INFLUX_WINDOW 파싱 (s/m)
+        w = window.lower().strip()
+        secs = 20
+        if w.endswith("s"):
+            secs = int(w[:-1] or 0)
+        elif w.endswith("m"):
+            secs = int(w[:-1] or 0) * 60
+        else:
+            # fallback: 20s
+            secs = 20
+        end_kst = start_kst + pd.to_timedelta(secs, unit="s")
+        start_utc = start_kst.tz_convert("UTC").strftime("%Y-%m-%dT%H:%M:%SZ")
+        end_utc = end_kst.tz_convert("UTC").strftime("%Y-%m-%dT%H:%M:%SZ")
+        print(f"[INFO] 절대 시간 조회(KST): {start_kst} ~ {end_kst} (window={window})")
+        query = (
+            f'\nSELECT * FROM "{measurement}" '
+            f"WHERE time >= '{start_utc}' AND time <= '{end_utc}' "
+            f"ORDER BY time ASC LIMIT {limit}\n"
+        )
+    else:
+        query = (
+            f'\nSELECT * FROM "{measurement}" '
+            f"WHERE time >= now() - {window} AND time <= now() "
+            f"ORDER BY time DESC LIMIT {limit}\n"
+        )
     print("[INFO] Influx 쿼리:", query)
     result = client.query(query)
     points = list(result.get_points()) if result else []
@@ -260,6 +291,27 @@ def aggregate_last_20s_to_5s(df: pd.DataFrame) -> pd.DataFrame:
     sensor_cols = [c for c in sub.columns if c not in status_cols]
 
     # 그룹핑: 5초 그룹, 라벨은 오른쪽 경계
+    # 디버그: 윈도우 매핑 정보 출력(원시 행 → 각 5초 윈도우 내 행 개수)
+    tmp_for_count = df[["_ts"]].copy()
+    tmp_for_count["ones"] = 1
+    tmp_for_count = tmp_for_count.set_index("_ts").sort_index()
+    win_counts = (
+        tmp_for_count["ones"]
+        .resample("5s", label="right", closed="right")
+        .sum()
+        .fillna(0)
+        .astype(int)
+    )
+    if not win_counts.empty:
+        # 최근/지정 구간의 윈도우 매핑 상세 로그 (최대 8개 윈도우)
+        idx_sample = win_counts.index[-8:]
+        try:
+            idx_kst = [t.tz_convert("Asia/Seoul") for t in idx_sample]
+        except Exception:
+            idx_kst = idx_sample
+        counts_sample = win_counts.loc[idx_sample].tolist()
+        mapping_log = list(zip(idx_kst, counts_sample))
+        print("[DEBUG] 5초 윈도우별 원시 행 개수(KST):", mapping_log)
     # 각 그룹에 대해 센서는 평균, 상태는 마지막 값
     df_mean = sub[sensor_cols].resample("5s", label="right", closed="right").mean()
 
