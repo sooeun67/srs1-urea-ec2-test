@@ -37,6 +37,7 @@ import joblib
 
 from influxdb import InfluxDBClient
 import mlflow
+import time
 
 # GP 제어 모델 입력 요구 컬럼(8개)
 REQUIRED_COLUMNS: List[str] = [
@@ -89,14 +90,27 @@ def select_run_id() -> str:
 
 def download_model(run_id: str, model_name: str = "urea_gp_model") -> Path:
     dst = Path("/tmp/mlflow_models") / f"{run_id}_{model_name}"
+    # 캐시 존재 시 재사용
+    if dst.exists() and any(dst.rglob("*")):
+        print(f"[INFO] 캐시된 모델 사용: {dst}")
+        return dst
+
+    print(f"[INFO] 모델 다운로드 시작: run_id={run_id}, artifact={model_name}")
+    t0 = time.time()
     path = mlflow.artifacts.download_artifacts(
         artifact_uri=f"runs:/{run_id}/{model_name}",
         dst_path=str(dst),
     )
-    print(f"[INFO] 모델 다운로드 경로: {path}")
-    print("[INFO] 포함 파일 목록:")
+    elapsed = time.time() - t0
+    print(f"[INFO] 모델 다운로드 완료 ({elapsed:.1f}s): {path}")
+    print("[INFO] 포함 파일 목록(최대 10개):")
+    cnt = 0
     for p in Path(path).rglob("*"):
         print(" -", p)
+        cnt += 1
+        if cnt >= 10:
+            print(" - ...")
+            break
     return path
 
 
