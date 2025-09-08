@@ -66,11 +66,12 @@ def _read_from_s3(uri: str) -> bytes:
 
 
 def read_parquet_from_s3(uri: str) -> pd.DataFrame:
-    """S3에서 parquet를 읽습니다. 파일명이 .gz면 gzip 해제 후 parquet로 해석을 시도합니다.
-    실패 시 예외를 그대로 올립니다.
+    """S3에서 데이터를 읽어 DataFrame으로 반환합니다.
+
+    우선 parquet으로 시도하고, 실패 시 JSON lines → CSV 순으로 자동 판별합니다.
+    파일명이 .gz면 gzip 해제 후 처리합니다.
     """
     import pyarrow.parquet as pq
-    import pyarrow as pa
 
     raw = _read_from_s3(uri)
     data = raw
@@ -78,12 +79,36 @@ def read_parquet_from_s3(uri: str) -> pd.DataFrame:
         try:
             data = gzip.decompress(raw)
         except Exception:
-            # gz가 아니면 원본 그대로 시도
             data = raw
 
-    table = pq.read_table(io.BytesIO(data))
-    df = table.to_pandas(types_mapper=pd.ArrowDtype)
-    return df
+    # 1) Parquet 시도
+    try:
+        table = pq.read_table(io.BytesIO(data))
+        df = table.to_pandas(types_mapper=pd.ArrowDtype)
+        print("📥 로드 형식: parquet")
+        return df
+    except Exception:
+        pass
+
+    # 2) JSON Lines 시도
+    try:
+        text = data.decode("utf-8", errors="replace")
+        df_json = pd.read_json(io.StringIO(text), lines=True)
+        if isinstance(df_json, pd.DataFrame) and not df_json.empty:
+            print("📥 로드 형식: jsonl")
+            return df_json
+    except Exception:
+        pass
+
+    # 3) CSV 시도
+    try:
+        text = data.decode("utf-8", errors="replace")
+        df_csv = pd.read_csv(io.StringIO(text))
+        print("📥 로드 형식: csv")
+        return df_csv
+    except Exception as e:
+        print(f"❌ 지원하지 않는 파일 형식 또는 손상된 파일: {e}")
+        raise
 
 
 def detect_time_column(df: pd.DataFrame) -> str:
