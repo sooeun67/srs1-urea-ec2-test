@@ -212,7 +212,11 @@ def query_recent_influx() -> pd.DataFrame:
         timeout=30,
     )
 
-    query = f'\nSELECT * FROM "{measurement}" WHERE time >= now() - {window} ORDER BY time DESC LIMIT {limit}\n'
+    query = (
+        f'\nSELECT * FROM "{measurement}" '
+        f"WHERE time >= now() - {window} AND time <= now() "
+        f"ORDER BY time DESC LIMIT {limit}\n"
+    )
     print("[INFO] Influx 쿼리:", query)
     result = client.query(query)
     points = list(result.get_points()) if result else []
