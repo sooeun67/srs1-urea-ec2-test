@@ -292,11 +292,8 @@ def aggregate_last_20s_to_5s(df: pd.DataFrame) -> pd.DataFrame:
 
     # 그룹핑: 5초 그룹, 라벨은 오른쪽 경계
     # 디버그: 윈도우 매핑 정보 출력(원시 행 → 각 5초 윈도우 내 행 개수)
-    tmp_for_count = df[["_ts"]].copy()
-    tmp_for_count["ones"] = 1
-    tmp_for_count = tmp_for_count.set_index("_ts").sort_index()
     win_counts = (
-        tmp_for_count["ones"]
+        pd.Series(1, index=df.index)
         .resample("5s", label="right", closed="right")
         .sum()
         .fillna(0)
