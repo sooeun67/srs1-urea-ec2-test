@@ -233,7 +233,8 @@ def query_recent_influx() -> pd.DataFrame:
         else:
             # fallback: 20s
             secs = 20
-        end_kst = start_kst + pd.to_timedelta(secs, unit="s")
+        # 종료 시점 포함 조건(<=)이므로 정확히 20초 구간을 만들기 위해 1초 감소
+        end_kst = start_kst + pd.to_timedelta(max(secs - 1, 0), unit="s")
         start_utc = start_kst.tz_convert("UTC").strftime("%Y-%m-%dT%H:%M:%SZ")
         end_utc = end_kst.tz_convert("UTC").strftime("%Y-%m-%dT%H:%M:%SZ")
         print(f"[INFO] 절대 시간 조회(KST): {start_kst} ~ {end_kst} (window={window})")
@@ -332,11 +333,8 @@ def aggregate_last_20s_to_5s(df: pd.DataFrame) -> pd.DataFrame:
         ).dt.tz_convert("Asia/Seoul")
     except Exception:
         pass
-    agg_pre = (
-        agg_pre.sort_values("_time_gateway", ascending=False)
-        .head(4)
-        .sort_values("_time_gateway")
-    )
+    # 가장 이른 4개 윈도우(예: 05,10,15,20)만 유지
+    agg_pre = agg_pre.sort_values("_time_gateway").head(4)
     print("[INFO] 5초 윈도우 요약(보간 전):")
     print(agg_pre.tail(4))
 
@@ -413,11 +411,8 @@ def aggregate_last_20s_to_5s(df: pd.DataFrame) -> pd.DataFrame:
         pass
 
     # 최신 4개 윈도우만 남김 (DESC → 상위 4 → 시간순으로 재정렬)
-    agg = (
-        agg.sort_values("_time_gateway", ascending=False)
-        .head(4)
-        .sort_values("_time_gateway")
-    )
+    # 가장 이른 4개 윈도우(예: 05,10,15,20)만 유지
+    agg = agg.sort_values("_time_gateway").head(4)
 
     # 로그 출력 (보간 후)
     print("[INFO] 5초 윈도우 요약(보간 후):")
