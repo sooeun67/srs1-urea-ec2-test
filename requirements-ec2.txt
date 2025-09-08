@@ -1,0 +1,33 @@
+# ARM64 Lambda 전용 requirements
+# [0903] 핵심 패키지만 포함하여 빌드 시간 단축
+# 베이스 이미지에 포함된 패키지도 버전 고정 및 의존성 명확성을 위해 유지
+
+# 데이터 처리 핵심
+numpy==2.3.2
+pandas==2.3.2
+
+# 머신러닝
+scikit-learn==1.7.1
+scipy==1.16.1
+lightgbm==4.6.0  # [0905] lightgbm 추가
+
+# 시각화
+matplotlib==3.10.6
+seaborn==0.13.2
+
+# MLflow
+mlflow==3.3.2
+mlflow-skinny==3.3.2
+
+# AWS 관련
+boto3==1.40.21
+botocore==1.40.21
+
+# InfluxDB 연결
+influxdb==5.3.2
+influxdb-client==1.46.0
+
+# 기타 유틸리티
+requests==2.32.5
+pyyaml==6.0.2
+python-dateutil==2.9.0.post0 
