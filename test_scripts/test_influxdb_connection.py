@@ -1,9 +1,11 @@
 """
 InfluxDB 연결 테스트 및 실시간 데이터 조회
 """
+
 import os
 import sys
-sys.path.append('..')
+
+sys.path.append("..")
 
 from influxdb_client import InfluxDBClient, Point
 from influxdb_client.client.write_api import SYNCHRONOUS
@@ -18,6 +20,7 @@ INFLUXDB_PASSWORD = "!Skepinfluxuser25"
 INFLUXDB_DATABASE = "SRS1"  # 데이터베이스명
 INFLUXDB_TIMEOUT = 30
 INFLUXDB_BUCKET = "SRS1"
+INFLUXDB_MEASUREMENT = "SRS1"  # 실제 측정값(테이블) 이름
 
 
 def test_influxdb_connection():
@@ -62,38 +65,37 @@ def test_realtime_data_query(client):
     if client is None:
         print("클라이언트가 없어서 데이터 조회를 건너뜁니다.")
         return None
-    
+
     print("\n" + "=" * 50)
     print("실시간 데이터 조회 테스트")
     print("=" * 50)
 
     try:
-        # 최근 1시간 데이터 조회
+        # 최근 1시간 데이터 조회 (측정값: SRS1)
         query = f"""
-        SELECT * FROM "SRS1_DATA" 
+        SELECT * FROM "{INFLUXDB_MEASUREMENT}" 
         WHERE time >= now() - 1h 
         ORDER BY time DESC 
         LIMIT 10
         """
-        
+
         print(f"쿼리 실행: {query}")
         result = client.query(query)
-        
-        if result:
-            print(f"조회된 데이터 포인트 수: {len(list(result.get_points()))}")
-            
-            # 데이터프레임으로 변환
-            points = list(result.get_points())
-            if points:
-                df = pd.DataFrame(points)
-                print(f"데이터프레임 형태: {df.shape}")
-                print("최신 데이터 샘플:")
-                print(df.head())
-                return df
-        else:
+
+        points = list(result.get_points()) if result else []
+        point_count = len(points)
+        print(f"조회된 데이터 포인트 수: {point_count}")
+
+        if point_count == 0:
             print("조회된 데이터가 없습니다.")
             return None
-            
+
+        df = pd.DataFrame(points)
+        print(f"데이터프레임 형태: {df.shape}")
+        print("최신 데이터 샘플:")
+        print(df.head())
+        return df
+
     except Exception as e:
         print(f"데이터 조회 실패: {e}")
         return None
@@ -102,11 +104,11 @@ def test_realtime_data_query(client):
 if __name__ == "__main__":
     # InfluxDB 연결 테스트
     client = test_influxdb_connection()
-    
+
     # 실시간 데이터 조회 테스트
     if client:
         data = test_realtime_data_query(client)
-        
+
         if data is not None:
             print("\n✅ InfluxDB 연결 및 데이터 조회 성공!")
         else:
