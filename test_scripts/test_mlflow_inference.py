@@ -13,7 +13,7 @@ test_mlflow_inference.py
   - MODEL_LOCAL_DIR: 수동 복사한 모델 디렉토리 지정 시 MLflow 다운로드 우회
     (미지정 시, 프로젝트 내 mlflow_artifacts/<RUN_ID>/urea_gp_model 경로 자동 탐색)
 
-  - START_TIME_KST: 절대 시작시각(KST) 지정 시 사용 (예: "2025-08-27 09:00:00")
+  - START_TIME_KST: 절대 시작시각(KST) 지정 시 사용 (예: "2025-08-27 09:00:01")
     - 지정 시: [START_TIME_KST, START_TIME_KST + INFLUX_WINDOW] 구간만 조회
     - 미지정 시: [now() - INFLUX_WINDOW, now()] 구간 조회
 
@@ -150,7 +150,7 @@ def test_mlflow_connection() -> None:
     - If RUN_ID is set, POST runs/get to print artifact_uri (5s)
     """
     tracking = os.environ.get("MLFLOW_TRACKING_URI")
-    print("\n[CHECK] MLflow 연결 테스트")
+    print("\n🧪 MLflow 연결 테스트")
     if not tracking:
         print("[WARN] MLFLOW_TRACKING_URI 미설정 → 연결 테스트 건너뜀")
         return
@@ -158,16 +158,16 @@ def test_mlflow_connection() -> None:
     base = tracking.rstrip("/")
     try:
         r = requests.get(base, timeout=5)
-        print(f"[INFO] GET {base} → HTTP {r.status_code}")
+        print(f"  ↳ GET {base} → HTTP {r.status_code}")
     except Exception as e:
-        print(f"[ERROR] GET {base} 실패: {e}")
+        print(f"❌ GET {base} 실패: {e}")
 
     try:
         url = f"{base}/api/2.0/mlflow/experiments/list"
         r = requests.post(url, json={}, timeout=5)
-        print(f"[INFO] POST /experiments/list → HTTP {r.status_code}")
+        print(f"  ↳ POST /experiments/list → HTTP {r.status_code}")
     except Exception as e:
-        print(f"[ERROR] POST /experiments/list 실패: {e}")
+        print(f"❌ POST /experiments/list 실패: {e}")
 
     run_id = os.environ.get("RUN_ID")
     if run_id:
@@ -177,13 +177,13 @@ def test_mlflow_connection() -> None:
             if r.ok:
                 data = r.json()
                 art = data.get("run", {}).get("info", {}).get("artifact_uri")
-                print(f"[INFO] run.artifact_uri: {art}")
+                print(f"📦 run.artifact_uri: {art}")
             else:
-                print(f"[WARN] runs/get HTTP {r.status_code}")
+                print(f"⚠️ runs/get HTTP {r.status_code}")
         except Exception as e:
-            print(f"[ERROR] POST /runs/get 실패: {e}")
+            print(f"❌ POST /runs/get 실패: {e}")
     else:
-        print("[INFO] RUN_ID 미설정 → runs/get 생략")
+        print("ℹ️ RUN_ID 미설정 → runs/get 생략")
 
 
 def pick_model_file(root: Path) -> Path:
@@ -248,16 +248,16 @@ def query_recent_influx() -> pd.DataFrame:
             f"WHERE time >= now() - {window} AND time <= now() "
             f"ORDER BY time DESC LIMIT {limit}\n"
         )
-    print("[INFO] Influx 쿼리:", query)
+    print("🔎 Influx 쿼리:", query)
     result = client.query(query)
     points = list(result.get_points()) if result else []
-    print(f"[INFO] 조회 포인트 수: {len(points)}")
+    print(f"📊 조회 포인트 수: {len(points)}")
 
     if not points:
         raise RuntimeError("최근 구간 데이터가 없습니다. 시간창/측정값을 조정하세요.")
 
     df = pd.DataFrame(points)
-    print("[INFO] 원본 데이터프레임:", df.shape)
+    print("🗂️ 원본 데이터프레임:", df.shape)
     # 주 관심 컬럼만 미리보기: REQUIRED_COLUMNS + time
     preview_cols = [c for c in ["time", *REQUIRED_COLUMNS] if c in df.columns]
     try:
@@ -314,8 +314,34 @@ def aggregate_last_20s_to_5s(df: pd.DataFrame) -> pd.DataFrame:
         counts_sample = win_counts.loc[idx_sample].tolist()
         mapping_log = list(zip(idx_kst, counts_sample))
         print("[DEBUG] 5초 윈도우별 원시 행 개수(KST):", mapping_log)
-    # 각 그룹에 대해 센서는 평균, 상태는 마지막 값
-    df_mean = sub[sensor_cols].resample("5s", label="right", closed="right").mean()
+    # 각 그룹에 대해 센서는 평균, 상태는 마지막 값 (보간 전 원본)
+    df_mean_raw = sub[sensor_cols].resample("5s", label="right", closed="right").mean()
+    df_last_raw = (
+        sub[status_cols].resample("5s", label="right", closed="right").last()
+        if status_cols
+        else pd.DataFrame(index=df_mean_raw.index)
+    )
+
+    # 보간 전 요약 출력
+    agg_pre = pd.concat([df_mean_raw, df_last_raw], axis=1)
+    agg_pre.index.name = "_time_gateway"
+    agg_pre = agg_pre.reset_index()
+    try:
+        agg_pre["_time_gateway"] = pd.to_datetime(
+            agg_pre["_time_gateway"], utc=True, errors="coerce"
+        ).dt.tz_convert("Asia/Seoul")
+    except Exception:
+        pass
+    agg_pre = (
+        agg_pre.sort_values("_time_gateway", ascending=False)
+        .head(4)
+        .sort_values("_time_gateway")
+    )
+    print("[INFO] 5초 윈도우 요약(보간 전):")
+    print(agg_pre.tail(4))
+
+    # 이후 처리용 복사본에 보간 수행
+    df_mean = df_mean_raw.copy()
 
     # 평균값(연속형) 컬럼들에 대해 NaN 윈도우 ffill 처리 및 로그
     for col in df_mean.columns:
@@ -342,8 +368,8 @@ def aggregate_last_20s_to_5s(df: pd.DataFrame) -> pd.DataFrame:
                 else:
                     print(f"[INFO] 보간된 윈도우(KST): {sample_kst}")
     df_last = (
-        sub[status_cols].resample("5s", label="right", closed="right").last()
-        if status_cols
+        df_last_raw.copy()
+        if not df_last_raw.empty
         else pd.DataFrame(index=df_mean.index)
     )
     # 상태값(범주형) 컬럼들에 대해서도 윈도우가 비어 NaN이면 직전 값으로 ffill
@@ -393,8 +419,8 @@ def aggregate_last_20s_to_5s(df: pd.DataFrame) -> pd.DataFrame:
         .sort_values("_time_gateway")
     )
 
-    # 로그 출력
-    print("[INFO] 5초 윈도우 요약:")
+    # 로그 출력 (보간 후)
+    print("[INFO] 5초 윈도우 요약(보간 후):")
     print(agg.tail(4))
 
     # 열 순서 정렬: REQUIRED_COLUMNS 순서 유지(존재하는 것만)
@@ -404,16 +430,16 @@ def aggregate_last_20s_to_5s(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def main() -> None:
-    print("=" * 60)
-    print("MLflow 모델 기반 실시간 추론 테스트 시작")
-    print("=" * 60)
+    print("🚀" + "=" * 58)
+    print("🚀 MLflow 모델 기반 실시간 추론 테스트 시작")
+    print("🚀" + "=" * 58)
 
     tracking_uri = os.environ.get("MLFLOW_TRACKING_URI")
     if tracking_uri:
-        print(f"[INFO] MLFLOW_TRACKING_URI: {tracking_uri}")
+        print(f"🔗 MLFLOW_TRACKING_URI: {tracking_uri}")
     else:
         print(
-            "[WARN] MLFLOW_TRACKING_URI가 설정되지 않았습니다. mlflow 기본 설정을 사용합니다."
+            "⚠️ MLFLOW_TRACKING_URI가 설정되지 않았습니다. mlflow 기본 설정을 사용합니다."
         )
 
     # 1) RUN 선택
@@ -422,7 +448,7 @@ def main() -> None:
     # 연결 사전 점검
     test_mlflow_connection()
     run_id = select_run_id()
-    print(f"[INFO] 사용 RUN_ID: {run_id}")
+    print(f"🏷️ 사용 RUN_ID: {run_id}")
 
     # 2) 모델 다운로드
     model_root = download_model(run_id=run_id, model_name="urea_gp_model")
@@ -430,14 +456,14 @@ def main() -> None:
     # 3) 모델 파일 선택 및 로드
     model_file = pick_model_file(model_root)
     model = joblib.load(model_file)
-    print(f"[INFO] 모델 로드 완료: {model_file}")
+    print(f"✅ 모델 로드 완료: {model_file}")
 
     # 4) Influx 최근 데이터 조회
     df = query_recent_influx()
 
     # 5) 5초 윈도우 요약(최근 20초 → 4행)
     agg = aggregate_last_20s_to_5s(df)
-    print("[INFO] 모델 입력용 요약(열 순서 고정):", agg.shape)
+    print("🧾 모델 입력용 요약(열 순서 고정):", agg.shape)
     print(agg)
 
     # 6) 모델 입력행 만들기: [Hz, O2, Temp] = [SNR_PMP_UW_S_1, BR1_EO_O2_A, ICF_CCS_FG_T_1]
@@ -456,7 +482,7 @@ def main() -> None:
 
     X = X_all.loc[valid_mask].to_numpy(dtype=float)
     valid_times = agg.loc[valid_mask, "_time_gateway"].tolist()
-    print("[INFO] 예측 입력 배열 형태:", X.shape)
+    print("🧮 예측 입력 배열 형태:", X.shape)
     print(X)
 
     # 7) 예측: 5초 윈도우 평균 입력만 사용하여 각 시점의 NOx 평균 예측 (결측 구간 제외)
@@ -464,15 +490,15 @@ def main() -> None:
         pred = model.predict(X)
         for t, v in zip(valid_times, pred):
             val = v[0] if hasattr(v, "__len__") else v
-            print(f"[RESULT] {t} → NOx mean={float(val):.3f}")
+            print(f"🎯 {t} → NOx mean={float(val):.3f}")
     else:
-        print("[WARN] 예측 가능한(결측 없는) 5초 구간이 없습니다.")
+        print("⚠️ 예측 가능한(결측 없는) 5초 구간이 없습니다.")
 
     # 결측으로 제외된 구간은 NaN으로 표시
     for t in invalid_times:
-        print(f"[RESULT] {t} → NOx mean=NaN (insufficient data)")
+        print(f"⚪ {t} → NOx mean=NaN (insufficient data)")
 
-    print("\n요약")
+    print("\n📌 요약")
     print("- RUN_ID:", run_id)
     print("- 모델 경로:", model_file)
     print("- 입력 요약 행 수:", len(agg))
