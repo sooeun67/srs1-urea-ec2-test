@@ -36,8 +36,7 @@ import pandas as pd
 import joblib
 
 from influxdb import InfluxDBClient
-
-from repository.model import ModelRepository
+import mlflow
 
 # GP 제어 모델 입력 요구 컬럼(8개)
 REQUIRED_COLUMNS: List[str] = [
@@ -57,7 +56,7 @@ def get_env(name: str, default: Optional[str] = None) -> str:
     return v if v is not None else ("" if default is None else str(default))
 
 
-def select_run_id(repo: ModelRepository) -> str:
+def select_run_id() -> str:
     run_id = os.environ.get("RUN_ID")
     if run_id:
         print(f"[INFO] 환경변수 RUN_ID 지정됨: {run_id}")
@@ -72,17 +71,27 @@ def select_run_id(repo: ModelRepository) -> str:
 
     print(f"[INFO] 최신 RUN 자동 선택 - 실험명: {experiment}")
     print(f"[INFO] 필터: {filter_string}")
-    return repo.get_latest_urea_model_run_id(
-        experiment_name=experiment, filter_string=filter_string
+    exp = mlflow.get_experiment_by_name(experiment)
+    if exp is None:
+        raise ValueError(f"Experiment '{experiment}' not found")
+    runs = mlflow.search_runs(
+        experiment_ids=[exp.experiment_id],
+        filter_string=filter_string,
+        order_by=["start_time DESC"],
+        max_results=1,
     )
+    if runs.empty:
+        raise ValueError(
+            f"No runs found in experiment '{experiment}' with filter '{filter_string}'"
+        )
+    return runs.iloc[0]["run_id"]
 
 
-def download_model(
-    repo: ModelRepository, run_id: str, model_name: str = "urea_gp_model"
-) -> Path:
+def download_model(run_id: str, model_name: str = "urea_gp_model") -> Path:
     dst = Path("/tmp/mlflow_models") / f"{run_id}_{model_name}"
-    path = repo.download_model_from_run_id(
-        run_id=run_id, model_name=model_name, target_path=dst
+    path = mlflow.artifacts.download_artifacts(
+        artifact_uri=f"runs:/{run_id}/{model_name}",
+        dst_path=str(dst),
     )
     print(f"[INFO] 모델 다운로드 경로: {path}")
     print("[INFO] 포함 파일 목록:")
@@ -247,14 +256,14 @@ def main() -> None:
             "[WARN] MLFLOW_TRACKING_URI가 설정되지 않았습니다. mlflow 기본 설정을 사용합니다."
         )
 
-    repo = ModelRepository(tracking_uri=tracking_uri)
-
     # 1) RUN 선택
-    run_id = select_run_id(repo)
+    if tracking_uri:
+        mlflow.set_tracking_uri(tracking_uri)
+    run_id = select_run_id()
     print(f"[INFO] 사용 RUN_ID: {run_id}")
 
     # 2) 모델 다운로드
-    model_root = download_model(repo, run_id=run_id, model_name="urea_gp_model")
+    model_root = download_model(run_id=run_id, model_name="urea_gp_model")
 
     # 3) 모델 파일 선택 및 로드
     model_file = pick_model_file(model_root)
