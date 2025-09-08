@@ -41,7 +41,7 @@ REQUIRED_COLUMNS: List[str] = [
     "ICF_SCS_FG_T_1",
     "ICF_TMS_NOX_A",
     "ACC_SNR_AI_1A",
-    "ACT_STATUS",
+    # "ACT_STATUS",
 ]
 
 
