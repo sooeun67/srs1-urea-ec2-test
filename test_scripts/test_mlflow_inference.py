@@ -258,7 +258,12 @@ def query_recent_influx() -> pd.DataFrame:
 
     df = pd.DataFrame(points)
     print("[INFO] 원본 데이터프레임:", df.shape)
-    print(df.head(3))
+    # 주 관심 컬럼만 미리보기: REQUIRED_COLUMNS + time
+    preview_cols = [c for c in ["time", *REQUIRED_COLUMNS] if c in df.columns]
+    try:
+        print(df[preview_cols].head(20) if preview_cols else df.head(20))
+    except Exception:
+        print(df.head(20))
     return df
 
 
