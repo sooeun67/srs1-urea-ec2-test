@@ -10,6 +10,9 @@ test_mlflow_inference.py
   - RUN_ID: 지정 시 해당 RUN 사용, 미지정 시 최신 RUN 자동 선택
   - MLFLOW_EXPERIMENT_NAME: 최신 RUN 자동 선택 시 필요 (예: urea_gp_prod)
 
+  - MODEL_LOCAL_DIR: 수동 복사한 모델 디렉토리 지정 시 MLflow 다운로드 우회
+    (미지정 시, 프로젝트 내 mlflow_artifacts/<RUN_ID>/urea_gp_model 경로 자동 탐색)
+
   - INFLUX_HOST (기본: 10.238.27.132)
   - INFLUX_PORT (기본: 8086)
   - INFLUX_USERNAME (기본: read_user)
@@ -97,6 +100,18 @@ def download_model(run_id: str, model_name: str = "urea_gp_model") -> Path:
         if p.exists() and any(p.rglob("*")):
             print(f"[INFO] 로컬 모델 경로 사용(MODEL_LOCAL_DIR): {p}")
             return p
+
+    # 0-1) 프로젝트 내 수동 복사본 자동 탐색
+    # 우선순위: mlflow_artifacts/<RUN_ID>/urea_gp_model → mlflow_artifacts/<RUN_ID>/artifacts/urea_gp_model → mlflow_artifacts/<RUN_ID>
+    local_candidates = [
+        PROJECT_ROOT / "mlflow_artifacts" / run_id / model_name,
+        PROJECT_ROOT / "mlflow_artifacts" / run_id / "artifacts" / model_name,
+        PROJECT_ROOT / "mlflow_artifacts" / run_id,
+    ]
+    for cand in local_candidates:
+        if cand.exists() and any(cand.rglob("*")):
+            print(f"[INFO] 로컬 모델 경로 자동 감지: {cand}")
+            return cand
 
     dst = Path("/tmp/mlflow_models") / f"{run_id}_{model_name}"
     # 캐시 존재 시 재사용
