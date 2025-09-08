@@ -13,8 +13,10 @@ test_mlflow_inference.py
   - MODEL_LOCAL_DIR: 수동 복사한 모델 디렉토리 지정 시 MLflow 다운로드 우회
     (미지정 시, 프로젝트 내 mlflow_artifacts/<RUN_ID>/urea_gp_model 경로 자동 탐색)
 
+  - START_TIME (UTC): 절대 시작시각(UTC) 지정 시 사용 (예: "2025-08-27 00:00:01")
+    - 지정 시: [START_TIME, START_TIME + INFLUX_WINDOW] 구간만 조회 (UTC)
   - START_TIME_KST: 절대 시작시각(KST) 지정 시 사용 (예: "2025-08-27 09:00:01")
-    - 지정 시: [START_TIME_KST, START_TIME_KST + INFLUX_WINDOW] 구간만 조회
+    - 지정 시: [START_TIME_KST, START_TIME_KST + INFLUX_WINDOW] 구간만 조회 (KST)
     - 미지정 시: [now() - INFLUX_WINDOW, now()] 구간 조회
 
   - INFLUX_HOST (기본: 10.238.27.132)
@@ -207,6 +209,7 @@ def query_recent_influx() -> pd.DataFrame:
     window = get_env("INFLUX_WINDOW", "20s")
     limit = int(get_env("INFLUX_LIMIT", "200"))
     start_time_kst = get_env("START_TIME_KST", "").strip()
+    start_time_utc = get_env("START_TIME", "").strip()
 
     client = InfluxDBClient(
         host=host,
@@ -217,8 +220,32 @@ def query_recent_influx() -> pd.DataFrame:
         timeout=30,
     )
 
-    # 절대 시작시각이 지정되면 해당 구간만 조회
-    if start_time_kst:
+    # 절대 시작시각이 지정되면 해당 구간만 조회 (우선순위: START_TIME(UTC) > START_TIME_KST)
+    if start_time_utc:
+        # UTC 기준 고정 구간
+        start_utc_dt = pd.to_datetime(start_time_utc, utc=True, errors="coerce")
+        # INFLUX_WINDOW 파싱 (s/m)
+        w = window.lower().strip()
+        secs = 20
+        if w.endswith("s"):
+            secs = int(w[:-1] or 0)
+        elif w.endswith("m"):
+            secs = int(w[:-1] or 0) * 60
+        else:
+            # fallback: 20s
+            secs = 20
+        end_utc_dt = start_utc_dt + pd.to_timedelta(max(secs - 1, 0), unit="s")
+        start_utc = start_utc_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+        end_utc = end_utc_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+        print(
+            f"[INFO] 절대 시간 조회(UTC): {start_utc_dt} ~ {end_utc_dt} (window={window})"
+        )
+        query = (
+            f'\nSELECT * FROM "{measurement}" '
+            f"WHERE time >= '{start_utc}' AND time <= '{end_utc}' "
+            f"ORDER BY time ASC LIMIT {limit}\n"
+        )
+    elif start_time_kst:
         try:
             start_kst = pd.to_datetime(start_time_kst).tz_localize("Asia/Seoul")
         except Exception:
@@ -308,13 +335,10 @@ def aggregate_last_20s_to_5s(df: pd.DataFrame) -> pd.DataFrame:
     if not win_counts.empty:
         # 최근/지정 구간의 윈도우 매핑 상세 로그 (최대 8개 윈도우)
         idx_sample = win_counts.index[-8:]
-        try:
-            idx_kst = [t.tz_convert("Asia/Seoul") for t in idx_sample]
-        except Exception:
-            idx_kst = idx_sample
+        idx_utc = idx_sample
         counts_sample = win_counts.loc[idx_sample].tolist()
-        mapping_log = list(zip(idx_kst, counts_sample))
-        print("[DEBUG] 5초 윈도우별 원시 행 개수(KST):", mapping_log)
+        mapping_log = list(zip(idx_utc, counts_sample))
+        print("[DEBUG] 5초 윈도우별 원시 행 개수(UTC):", mapping_log)
     # 각 그룹에 대해 센서는 평균, 상태는 마지막 값 (보간 전 원본)
     df_mean_raw = sub[sensor_cols].resample("5s", label="right", closed="right").mean()
     df_last_raw = (
@@ -330,7 +354,7 @@ def aggregate_last_20s_to_5s(df: pd.DataFrame) -> pd.DataFrame:
     try:
         agg_pre["_time_gateway"] = pd.to_datetime(
             agg_pre["_time_gateway"], utc=True, errors="coerce"
-        ).dt.tz_convert("Asia/Seoul")
+        ).dt.tz_convert("UTC")
     except Exception:
         pass
     # 가장 이른 4개 윈도우(예: 05,10,15,20)만 유지
@@ -356,15 +380,11 @@ def aggregate_last_20s_to_5s(df: pd.DataFrame) -> pd.DataFrame:
             if filled_count > 0:
                 filled_times = df_mean.index[pre_nan_mask & ~post_nan_mask].tolist()
                 sample = filled_times[:5]
-                # Convert to KST for readability
-                try:
-                    sample_kst = [t.tz_convert("Asia/Seoul") for t in sample]
-                except Exception:
-                    sample_kst = sample
+                sample_utc = sample
                 if len(filled_times) > 5:
-                    print(f"[INFO] 보간된 윈도우 예시(최대 5개, KST): {sample_kst} ...")
+                    print(f"[INFO] 보간된 윈도우 예시(최대 5개, UTC): {sample_utc} ...")
                 else:
-                    print(f"[INFO] 보간된 윈도우(KST): {sample_kst}")
+                    print(f"[INFO] 보간된 윈도우(UTC): {sample_utc}")
     df_last = (
         df_last_raw.copy()
         if not df_last_raw.empty
@@ -386,27 +406,23 @@ def aggregate_last_20s_to_5s(df: pd.DataFrame) -> pd.DataFrame:
                 if filled_count > 0:
                     filled_times = df_last.index[pre_nan_mask & ~post_nan_mask].tolist()
                     sample = filled_times[:5]
-                    # Convert to KST for readability
-                    try:
-                        sample_kst = [t.tz_convert("Asia/Seoul") for t in sample]
-                    except Exception:
-                        sample_kst = sample
+                    sample_utc = sample
                     if len(filled_times) > 5:
                         print(
-                            f"[INFO] 보간된 윈도우 예시(최대 5개, KST): {sample_kst} ..."
+                            f"[INFO] 보간된 윈도우 예시(최대 5개, UTC): {sample_utc} ..."
                         )
                     else:
-                        print(f"[INFO] 보간된 윈도우(KST): {sample_kst}")
+                        print(f"[INFO] 보간된 윈도우(UTC): {sample_utc}")
 
     agg = pd.concat([df_mean, df_last], axis=1)
     agg.index.name = "_time_gateway"
     agg = agg.reset_index()
 
-    # Convert gateway time from UTC to KST for display
+    # Ensure gateway time is displayed in UTC
     try:
         agg["_time_gateway"] = pd.to_datetime(
             agg["_time_gateway"], utc=True, errors="coerce"
-        ).dt.tz_convert("Asia/Seoul")
+        ).dt.tz_convert("UTC")
     except Exception:
         pass
 
