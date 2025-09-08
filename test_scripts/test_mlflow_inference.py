@@ -38,6 +38,7 @@ import joblib
 from influxdb import InfluxDBClient
 import mlflow
 import time
+import requests
 
 # GP 제어 모델 입력 요구 컬럼(8개)
 REQUIRED_COLUMNS: List[str] = [
@@ -89,6 +90,14 @@ def select_run_id() -> str:
 
 
 def download_model(run_id: str, model_name: str = "urea_gp_model") -> Path:
+    # 0) 로컬 경로 오버라이드(문제시 수동 배포 파일 사용)
+    override = os.environ.get("MODEL_LOCAL_DIR")
+    if override:
+        p = Path(override)
+        if p.exists() and any(p.rglob("*")):
+            print(f"[INFO] 로컬 모델 경로 사용(MODEL_LOCAL_DIR): {p}")
+            return p
+
     dst = Path("/tmp/mlflow_models") / f"{run_id}_{model_name}"
     # 캐시 존재 시 재사용
     if dst.exists() and any(dst.rglob("*")):
@@ -112,6 +121,50 @@ def download_model(run_id: str, model_name: str = "urea_gp_model") -> Path:
             print(" - ...")
             break
     return path
+
+
+def test_mlflow_connection() -> None:
+    """Quick MLflow connectivity test with short timeouts.
+
+    - GET tracking root (5s)
+    - POST experiments/list (5s)
+    - If RUN_ID is set, POST runs/get to print artifact_uri (5s)
+    """
+    tracking = os.environ.get("MLFLOW_TRACKING_URI")
+    print("\n[CHECK] MLflow 연결 테스트")
+    if not tracking:
+        print("[WARN] MLFLOW_TRACKING_URI 미설정 → 연결 테스트 건너뜀")
+        return
+
+    base = tracking.rstrip("/")
+    try:
+        r = requests.get(base, timeout=5)
+        print(f"[INFO] GET {base} → HTTP {r.status_code}")
+    except Exception as e:
+        print(f"[ERROR] GET {base} 실패: {e}")
+
+    try:
+        url = f"{base}/api/2.0/mlflow/experiments/list"
+        r = requests.post(url, json={}, timeout=5)
+        print(f"[INFO] POST /experiments/list → HTTP {r.status_code}")
+    except Exception as e:
+        print(f"[ERROR] POST /experiments/list 실패: {e}")
+
+    run_id = os.environ.get("RUN_ID")
+    if run_id:
+        try:
+            url = f"{base}/api/2.0/mlflow/runs/get"
+            r = requests.post(url, json={"run_id": run_id}, timeout=5)
+            if r.ok:
+                data = r.json()
+                art = data.get("run", {}).get("info", {}).get("artifact_uri")
+                print(f"[INFO] run.artifact_uri: {art}")
+            else:
+                print(f"[WARN] runs/get HTTP {r.status_code}")
+        except Exception as e:
+            print(f"[ERROR] POST /runs/get 실패: {e}")
+    else:
+        print("[INFO] RUN_ID 미설정 → runs/get 생략")
 
 
 def pick_model_file(root: Path) -> Path:
@@ -273,6 +326,8 @@ def main() -> None:
     # 1) RUN 선택
     if tracking_uri:
         mlflow.set_tracking_uri(tracking_uri)
+    # 연결 사전 점검
+    test_mlflow_connection()
     run_id = select_run_id()
     print(f"[INFO] 사용 RUN_ID: {run_id}")
 
