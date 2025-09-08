@@ -112,7 +112,7 @@ def read_parquet_from_s3(uri: str) -> pd.DataFrame:
 
 
 def detect_time_column(df: pd.DataFrame) -> str:
-    candidates = ["time", "_time", "timestamp", "event_time"]
+    candidates = ["time", "_time_gateway", "timestamp"]
     for c in candidates:
         if c in df.columns:
             return c
