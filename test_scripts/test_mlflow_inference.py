@@ -257,7 +257,7 @@ def aggregate_last_20s_to_5s(df: pd.DataFrame) -> pd.DataFrame:
 
     # 그룹핑: 5초 그룹, 라벨은 오른쪽 경계
     # 각 그룹에 대해 센서는 평균, 상태는 마지막 값
-    df_mean = sub[sensor_cols].resample("5S", label="right", closed="right").mean()
+    df_mean = sub[sensor_cols].resample("5s", label="right", closed="right").mean()
 
     # 평균값(연속형) 컬럼들에 대해 NaN 윈도우 ffill 처리 및 로그
     for col in df_mean.columns:
@@ -274,12 +274,17 @@ def aggregate_last_20s_to_5s(df: pd.DataFrame) -> pd.DataFrame:
             if filled_count > 0:
                 filled_times = df_mean.index[pre_nan_mask & ~post_nan_mask].tolist()
                 sample = filled_times[:5]
+                # Convert to KST for readability
+                try:
+                    sample_kst = [t.tz_convert("Asia/Seoul") for t in sample]
+                except Exception:
+                    sample_kst = sample
                 if len(filled_times) > 5:
-                    print(f"[INFO] 보간된 윈도우 예시(최대 5개): {sample} ...")
+                    print(f"[INFO] 보간된 윈도우 예시(최대 5개, KST): {sample_kst} ...")
                 else:
-                    print(f"[INFO] 보간된 윈도우: {sample}")
+                    print(f"[INFO] 보간된 윈도우(KST): {sample_kst}")
     df_last = (
-        sub[status_cols].resample("5S", label="right", closed="right").last()
+        sub[status_cols].resample("5s", label="right", closed="right").last()
         if status_cols
         else pd.DataFrame(index=df_mean.index)
     )
@@ -299,14 +304,29 @@ def aggregate_last_20s_to_5s(df: pd.DataFrame) -> pd.DataFrame:
                 if filled_count > 0:
                     filled_times = df_last.index[pre_nan_mask & ~post_nan_mask].tolist()
                     sample = filled_times[:5]
+                    # Convert to KST for readability
+                    try:
+                        sample_kst = [t.tz_convert("Asia/Seoul") for t in sample]
+                    except Exception:
+                        sample_kst = sample
                     if len(filled_times) > 5:
-                        print(f"[INFO] 보간된 윈도우 예시(최대 5개): {sample} ...")
+                        print(
+                            f"[INFO] 보간된 윈도우 예시(최대 5개, KST): {sample_kst} ..."
+                        )
                     else:
-                        print(f"[INFO] 보간된 윈도우: {sample}")
+                        print(f"[INFO] 보간된 윈도우(KST): {sample_kst}")
 
     agg = pd.concat([df_mean, df_last], axis=1)
     agg.index.name = "_time_gateway"
     agg = agg.reset_index()
+
+    # Convert gateway time from UTC to KST for display
+    try:
+        agg["_time_gateway"] = pd.to_datetime(
+            agg["_time_gateway"], utc=True, errors="coerce"
+        ).dt.tz_convert("Asia/Seoul")
+    except Exception:
+        pass
 
     # 최신 4개 윈도우만 남김 (DESC → 상위 4 → 시간순으로 재정렬)
     agg = (
