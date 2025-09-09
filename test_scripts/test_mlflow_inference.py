@@ -497,41 +497,12 @@ def main() -> None:
     print(f"🏷️ 사용 RUN_ID: {run_id}")
 
     # 2) GP 모델 로드 (기존 MLflow 모델 대신)
-    # 모델 파일 경로 후보들
-    model_candidates = [
-        f"mlflow_artifacts/{run_id}/urea_gp_model/gp_model.joblib",
-        f"mlflow_artifacts/{run_id}/gp_model.joblib",
-        f"mlflow_artifacts/{run_id}/urea_gp_model/model.joblib",
-        f"mlflow_artifacts/{run_id}/model.joblib",
-    ]
-
-    model_file = None
-    for candidate in model_candidates:
-        if os.path.exists(candidate):
-            model_file = candidate
-            break
-
-    if model_file is None:
-        print(f"❌ 모델 파일을 찾을 수 없습니다. 시도한 경로들:")
-        for candidate in model_candidates:
-            print(f"   - {candidate}")
-        print(f"\n📁 현재 디렉토리 구조 확인:")
-        print(f"   mlflow_artifacts/{run_id}/")
-        if os.path.exists(f"mlflow_artifacts/{run_id}"):
-            import subprocess
-
-            try:
-                result = subprocess.run(
-                    ["ls", "-la", f"mlflow_artifacts/{run_id}"],
-                    capture_output=True,
-                    text=True,
-                )
-                print(result.stdout)
-            except:
-                print("   (ls 명령어 실행 실패)")
-        raise FileNotFoundError(
-            f"GP 모델 파일을 찾을 수 없습니다. 위 경로들을 확인하세요."
-        )
+    model_file = f"mlflow_artifacts/{run_id}/urea_gp_model/gp_model.joblib"
+    if not os.path.exists(model_file):
+        # 대안 경로 시도
+        model_file = f"mlflow_artifacts/{run_id}/gp_model.joblib"
+        if not os.path.exists(model_file):
+            raise FileNotFoundError(f"GP 모델 파일을 찾을 수 없습니다: {model_file}")
 
     # GP 모델 로드
     gp_model.load(model_file)
