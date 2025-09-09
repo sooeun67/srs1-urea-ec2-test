@@ -6,7 +6,11 @@ Optimization configuration for SKEP Urea Control System
 """
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Optional
+import logging
+
+from utils.logger import LoggerConfig  # ← 로깅 오버라이드 지점
+
 
 @dataclass
 class OptimizationConfig:
@@ -15,7 +19,7 @@ class OptimizationConfig:
     # 기본 최적화 파라미터
     target_nox: float = 10.0
     p_feasible: float = 0.90
-    n_candidates: int | None = None
+    n_candidates: Optional[int] = None
     round_to_int: bool = True
 
     # 펌프 Hz 전역 범위
@@ -35,15 +39,25 @@ class OptimizationConfig:
         }
     )
 
+    # === 로깅 설정(오버라이드 지점) ===
+    # 필요 시 model_config.py처럼 여기서 name/level만 바꿔서 사용
+    logger_cfg: LoggerConfig = field(
+        default_factory=lambda: LoggerConfig(
+            name="PumpOptimizer",
+            level=logging.DEBUG,  # 필요에 따라 INFO/DEBUG 등으로 조정
+            # fmt/datefmt/propagate/refresh_handlers/use_stdout 는 logger.py 기본값 사용
+        )
+    )
+
     @property
     def pump_bounds(self) -> Tuple[float, float]:
         """펌프 Hz 범위 (min, max)"""
         return (float(self.minimum_hz), float(self.maximum_hz))
 
-    def get_z_value(self, p_feasible: float | None = None) -> float:
+    def get_z_value(self, p_feasible: Optional[float] = None) -> float:
         """
         안전확률 p_feasible를 가장 가까운(이상) 키로 매핑하여 z 반환.
-        - 기본 전략: p 이상인 키 중 최솟값 선택
+        - 기본: p 이상인 키 중 최솟값 선택
         - 매칭 없으면 0.0
         """
         p = self.p_feasible if p_feasible is None else float(p_feasible)

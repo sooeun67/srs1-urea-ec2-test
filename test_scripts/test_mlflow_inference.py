@@ -49,22 +49,52 @@ import mlflow
 import time
 import requests
 
-# GP 제어 모델 입력 요구 컬럼(8개)
+# 새로운 전처리 파이프라인 import
+from config.column_config import ColumnConfig
+from config.preprocessing_config import InferPreprocessingConfig
+from src.data_processing.preprocessor import Preprocessor
+from utils.logger import LoggerConfig
+
+# GP 제어 모델 입력 요구 컬럼(8개) - ColumnConfig와 매핑
 REQUIRED_COLUMNS: List[str] = [
-    "_time_gateway",
-    "BR1_EO_O2_A",
-    "SNR_PMP_UW_S_1",
-    "ICF_CCS_FG_T_1",
-    "ICF_SCS_FG_T_1",
-    "ICF_TMS_NOX_A",
-    "ACC_SNR_AI_1A",
-    "ACT_STATUS",
+    "_time_gateway",  # col_datetime
+    "BR1_EO_O2_A",  # col_o2
+    "SNR_PMP_UW_S_1",  # col_hz
+    "ICF_CCS_FG_T_1",  # col_inner_temp
+    "ICF_SCS_FG_T_1",  # col_outer_temp
+    "ICF_TMS_NOX_A",  # col_nox
+    "ACC_SNR_AI_1A",  # col_ai
+    "ACT_STATUS",  # col_act_status
 ]
 
 
 def get_env(name: str, default: Optional[str] = None) -> str:
     v = os.environ.get(name)
     return v if v is not None else ("" if default is None else str(default))
+
+
+def setup_preprocessing_config() -> (
+    tuple[ColumnConfig, InferPreprocessingConfig, Preprocessor]
+):
+    """전처리 설정 초기화"""
+    # ColumnConfig 초기화 (SRS1 프리셋 적용)
+    cc = ColumnConfig(plant_code="SRS1")
+
+    # InferPreprocessingConfig 초기화
+    infer_cfg = InferPreprocessingConfig(
+        column_config=cc,
+        plant_code="SRS1",
+        resample_sec=5,  # 5초 간격
+        ffill_limit_sec=20,  # 20초 이내 ffill
+    )
+
+    # Preprocessor 초기화
+    preprocessor = Preprocessor(
+        column_config=cc,
+        prep_infer_cfg=infer_cfg,
+    )
+
+    return cc, infer_cfg, preprocessor
 
 
 def select_run_id() -> str:
@@ -295,8 +325,12 @@ def query_recent_influx() -> pd.DataFrame:
     return df
 
 
-def aggregate_last_20s_to_5s(df: pd.DataFrame) -> pd.DataFrame:
+def aggregate_last_20s_to_5s(
+    df: pd.DataFrame, preprocessor: Preprocessor, cc: ColumnConfig
+) -> pd.DataFrame:
     """최근 20초 데이터를 5초 윈도우로 요약하여 4행 반환.
+
+    새로운 전처리 파이프라인을 활용하여 ffill 보간을 수행합니다.
 
     - 센서 컬럼: 5초 평균
     - *_status 컬럼: 각 윈도우의 마지막 값
@@ -305,145 +339,91 @@ def aggregate_last_20s_to_5s(df: pd.DataFrame) -> pd.DataFrame:
     if "time" not in df.columns:
         raise KeyError("Influx 응답에 'time' 컬럼이 없습니다.")
 
-    # 시간 처리 및 정렬 (오름차순 → 그룹핑 안정화)
-    ts = pd.to_datetime(df["time"], utc=True, errors="coerce")
-    df = df.copy()
-    df["_ts"] = ts
-    df = df.dropna(subset=["_ts"]).sort_values("_ts")
-    df = df.set_index("_ts")
+    # 1) InfluxDB 컬럼명을 ColumnConfig 컬럼명으로 매핑
+    df_mapped = df.copy()
+    df_mapped[cc.col_datetime] = pd.to_datetime(df["time"], utc=True, errors="coerce")
 
-    # 필요한 8개 컬럼만 추출(없으면 에러)
-    needed = [c for c in REQUIRED_COLUMNS if c != "_time_gateway"]
-    missing = [c for c in needed if c not in df.columns]
-    if missing:
-        raise KeyError(f"필요 컬럼 누락: {missing}")
-    sub = df[needed].copy()
+    # 컬럼명 매핑 (InfluxDB → ColumnConfig)
+    column_mapping = {
+        "BR1_EO_O2_A": cc.col_o2,
+        "SNR_PMP_UW_S_1": cc.col_hz,
+        "ICF_CCS_FG_T_1": cc.col_inner_temp,
+        "ICF_SCS_FG_T_1": cc.col_outer_temp,
+        "ICF_TMS_NOX_A": cc.col_nox,
+        "ACC_SNR_AI_1A": cc.col_ai,
+        "ACT_STATUS": cc.col_act_status,
+    }
+
+    for influx_col, config_col in column_mapping.items():
+        if influx_col in df.columns:
+            df_mapped[config_col] = df[influx_col]
+
+    # 필요한 컬럼만 추출
+    required_cols = [cc.col_datetime] + list(column_mapping.values())
+    df_mapped = df_mapped[required_cols].dropna(subset=[cc.col_datetime])
+
+    print(f"🔄 컬럼 매핑 완료: {df_mapped.shape}")
+    print(f"📋 매핑된 컬럼: {list(df_mapped.columns)}")
+
+    # 2) 5초 윈도우 요약 (센서: 평균, 상태: 마지막값)
+    df_mapped = df_mapped.set_index(cc.col_datetime).sort_index()
 
     # 센서/상태 컬럼 구분
-    status_cols = [c for c in sub.columns if c.endswith("_status")]
-    sensor_cols = [c for c in sub.columns if c not in status_cols]
+    status_cols = [cc.col_act_status]
+    sensor_cols = [c for c in df_mapped.columns if c not in status_cols]
 
-    # 그룹핑: 5초 그룹, 라벨은 오른쪽 경계
-    # 디버그: 윈도우 매핑 정보 출력(원시 행 → 각 5초 윈도우 내 행 개수)
-    win_counts = (
-        pd.Series(1, index=df.index)
-        .resample("5s", label="right", closed="right")
-        .sum()
-        .fillna(0)
-        .astype(int)
+    # 5초 윈도우 요약
+    df_mean = (
+        df_mapped[sensor_cols].resample("5s", label="right", closed="right").mean()
     )
-    if not win_counts.empty:
-        # 최근/지정 구간의 윈도우 매핑 상세 로그 (최대 8개 윈도우)
-        idx_sample = win_counts.index[-8:]
-        idx_utc = idx_sample
-        counts_sample = win_counts.loc[idx_sample].tolist()
-        mapping_log = list(zip(idx_utc, counts_sample))
-        print("[DEBUG] 5초 윈도우별 원시 행 개수(UTC):", mapping_log)
-    # 각 그룹에 대해 센서는 평균, 상태는 마지막 값 (보간 전 원본)
-    df_mean_raw = sub[sensor_cols].resample("5s", label="right", closed="right").mean()
-    df_last_raw = (
-        sub[status_cols].resample("5s", label="right", closed="right").last()
-        if status_cols
-        else pd.DataFrame(index=df_mean_raw.index)
+    df_last = (
+        df_mapped[status_cols].resample("5s", label="right", closed="right").last()
     )
 
     # 보간 전 요약 출력
-    agg_pre = pd.concat([df_mean_raw, df_last_raw], axis=1)
-    agg_pre.index.name = "_time_gateway"
+    agg_pre = pd.concat([df_mean, df_last], axis=1)
+    agg_pre.index.name = cc.col_datetime
     agg_pre = agg_pre.reset_index()
-    try:
-        agg_pre["_time_gateway"] = pd.to_datetime(
-            agg_pre["_time_gateway"], utc=True, errors="coerce"
-        ).dt.tz_convert("UTC")
-    except Exception:
-        pass
-    # 가장 이른 4개 윈도우(예: 05,10,15,20)만 유지
-    agg_pre = agg_pre.sort_values("_time_gateway").head(4)
-    print("[INFO] 5초 윈도우 요약(보간 전):")
+    agg_pre = agg_pre.sort_values(cc.col_datetime).head(4)
+    print("🧾 5초 윈도우 요약(보간 전, UTC):")
     print(agg_pre.tail(4))
 
-    # 이후 처리용 복사본에 보간 수행
-    df_mean = df_mean_raw.copy()
-
-    # 평균값(연속형) 컬럼들에 대해 NaN 윈도우 ffill 처리 및 로그
-    for col in df_mean.columns:
-        pre_nan_mask = df_mean[col].isna()
-        pre_nan_count = int(pre_nan_mask.sum())
-        if pre_nan_count > 0:
-            df_mean[col] = df_mean[col].ffill()
-            post_nan_mask = df_mean[col].isna()
-            post_nan_count = int(post_nan_mask.sum())
-            filled_count = pre_nan_count - post_nan_count
-            print(
-                f"[INFO] {col} 5초 평균 NaN 윈도우: {pre_nan_count} → ffill 후 {post_nan_count} (보간된 윈도우: {filled_count})"
-            )
-            if filled_count > 0:
-                filled_times = df_mean.index[pre_nan_mask & ~post_nan_mask].tolist()
-                sample = filled_times[:5]
-                sample_utc = sample
-                if len(filled_times) > 5:
-                    print(f"[INFO] 보간된 윈도우 예시(최대 5개, UTC): {sample_utc} ...")
-                else:
-                    print(f"[INFO] 보간된 윈도우(UTC): {sample_utc}")
-    df_last = (
-        df_last_raw.copy()
-        if not df_last_raw.empty
-        else pd.DataFrame(index=df_mean.index)
+    # 3) preprocessor.py의 make_infer_ffill 활용
+    print("🔧 preprocessor.py make_infer_ffill 적용 중...")
+    agg_processed = preprocessor.make_infer_ffill(
+        agg_pre,
+        require_full_index=False,  # 이미 5초 간격으로 요약됨
+        logger_cfg=LoggerConfig(name="MLflowInference", level=20),  # INFO 레벨
     )
-    # 상태값(범주형) 컬럼들에 대해서도 윈도우가 비어 NaN이면 직전 값으로 ffill
-    if not df_last.empty:
-        for col in df_last.columns:
-            pre_nan_mask = df_last[col].isna()
-            pre_nan_count = int(pre_nan_mask.sum())
-            if pre_nan_count > 0:
-                df_last[col] = df_last[col].ffill()
-                post_nan_mask = df_last[col].isna()
-                post_nan_count = int(post_nan_mask.sum())
-                filled_count = pre_nan_count - post_nan_count
-                print(
-                    f"[INFO] {col} 5초 마지막값 NaN 윈도우: {pre_nan_count} → ffill 후 {post_nan_count} (보간된 윈도우: {filled_count})"
-                )
-                if filled_count > 0:
-                    filled_times = df_last.index[pre_nan_mask & ~post_nan_mask].tolist()
-                    sample = filled_times[:5]
-                    sample_utc = sample
-                    if len(filled_times) > 5:
-                        print(
-                            f"[INFO] 보간된 윈도우 예시(최대 5개, UTC): {sample_utc} ..."
-                        )
-                    else:
-                        print(f"[INFO] 보간된 윈도우(UTC): {sample_utc}")
 
-    agg = pd.concat([df_mean, df_last], axis=1)
-    agg.index.name = "_time_gateway"
-    agg = agg.reset_index()
+    # 4) 최종 결과 정리
+    agg_processed = agg_processed.sort_values(cc.col_datetime).head(4)
 
-    # Ensure gateway time is displayed in UTC
-    try:
-        agg["_time_gateway"] = pd.to_datetime(
-            agg["_time_gateway"], utc=True, errors="coerce"
-        ).dt.tz_convert("UTC")
-    except Exception:
-        pass
+    # 컬럼명을 원래 REQUIRED_COLUMNS로 되돌리기
+    reverse_mapping = {v: k for k, v in column_mapping.items()}
+    reverse_mapping[cc.col_datetime] = "_time_gateway"
 
-    # 최신 4개 윈도우만 남김 (DESC → 상위 4 → 시간순으로 재정렬)
-    # 가장 이른 4개 윈도우(예: 05,10,15,20)만 유지
-    agg = agg.sort_values("_time_gateway").head(4)
-
-    # 로그 출력 (보간 후)
-    print("[INFO] 5초 윈도우 요약(보간 후):")
-    print(agg.tail(4))
+    agg_final = agg_processed.rename(columns=reverse_mapping)
 
     # 열 순서 정렬: REQUIRED_COLUMNS 순서 유지(존재하는 것만)
-    ordered_cols = [c for c in REQUIRED_COLUMNS if c in agg.columns]
-    agg = agg[ordered_cols]
-    return agg
+    ordered_cols = [c for c in REQUIRED_COLUMNS if c in agg_final.columns]
+    agg_final = agg_final[ordered_cols]
+
+    print("🧾 5초 윈도우 요약(보간 후, UTC):")
+    print(agg_final.tail(4))
+
+    return agg_final
 
 
 def main() -> None:
     print("🚀" + "=" * 58)
     print("🚀 MLflow 모델 기반 실시간 추론 테스트 시작")
     print("🚀" + "=" * 58)
+
+    # 0) 전처리 설정 초기화
+    print("⚙️ 전처리 설정 초기화 중...")
+    cc, infer_cfg, preprocessor = setup_preprocessing_config()
+    print(f"✅ 전처리 설정 완료: {cc.plant_code}")
 
     tracking_uri = os.environ.get("MLFLOW_TRACKING_URI")
     if tracking_uri:
@@ -472,18 +452,21 @@ def main() -> None:
     # 4) Influx 최근 데이터 조회
     df = query_recent_influx()
 
-    # 5) 5초 윈도우 요약(최근 20초 → 4행)
-    agg = aggregate_last_20s_to_5s(df)
+    # 5) 5초 윈도우 요약(최근 20초 → 4행) - 새로운 전처리 파이프라인 활용
+    agg = aggregate_last_20s_to_5s(df, preprocessor, cc)
     print("🧾 모델 입력용 요약(열 순서 고정):", agg.shape)
     print(agg)
 
-    # 6) 모델 입력행 만들기: [Hz, O2, Temp] = [SNR_PMP_UW_S_1, BR1_EO_O2_A, ICF_CCS_FG_T_1]
-    feature_cols = ["SNR_PMP_UW_S_1", "BR1_EO_O2_A", "ICF_CCS_FG_T_1"]
-    missing_feat = [c for c in feature_cols if c not in agg.columns]
+    # 6) 모델 입력행 만들기: ColumnConfig의 gp_feature_columns 활용
+    feature_cols = cc.gp_feature_columns  # [col_hz, col_o2, col_temp]
+    # InfluxDB 컬럼명으로 변환
+    influx_feature_cols = ["SNR_PMP_UW_S_1", "BR1_EO_O2_A", "ICF_CCS_FG_T_1"]
+
+    missing_feat = [c for c in influx_feature_cols if c not in agg.columns]
     if missing_feat:
         raise KeyError(f"모델 입력 피처 누락: {missing_feat}")
 
-    X_all = agg[feature_cols]
+    X_all = agg[influx_feature_cols]
     valid_mask = ~X_all.isna().any(axis=1)
     invalid_times = agg.loc[~valid_mask, "_time_gateway"].tolist()
     if invalid_times:
@@ -494,6 +477,7 @@ def main() -> None:
     X = X_all.loc[valid_mask].to_numpy(dtype=float)
     valid_times = agg.loc[valid_mask, "_time_gateway"].tolist()
     print("🧮 예측 입력 배열 형태:", X.shape)
+    print(f"📋 피처 컬럼: {influx_feature_cols}")
     print(X)
 
     # 7) 예측: 5초 윈도우 평균 입력만 사용하여 각 시점의 NOx 평균 예측 (결측 구간 제외)
