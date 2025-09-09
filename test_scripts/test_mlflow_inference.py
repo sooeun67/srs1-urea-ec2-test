@@ -55,6 +55,11 @@ from config.preprocessing_config import InferPreprocessingConfig
 from src.data_processing.preprocessor import Preprocessor
 from utils.logger import LoggerConfig
 
+# pandas 출력 설정: 모든 컬럼 표시
+pd.set_option("display.max_columns", None)
+pd.set_option("display.width", None)
+pd.set_option("display.max_colwidth", None)
+
 # GP 제어 모델 입력 요구 컬럼(8개) - ColumnConfig와 매핑
 REQUIRED_COLUMNS: List[str] = [
     "_time_gateway",  # col_datetime
