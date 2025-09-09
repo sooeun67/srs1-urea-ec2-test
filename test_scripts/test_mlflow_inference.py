@@ -124,14 +124,14 @@ def setup_preprocessing_config() -> tuple[
 
     # OptimizationConfig 초기화
     opt_cfg = OptimizationConfig(
-        target_nox=20.0,  # 목표 NOx
-        p_feasible=0.90,  # 90% 신뢰도
-        n_candidates=50,  # 후보 개수
-        round_to_int=True,  # 정수 반올림
-        minimum_hz=38.0,  # 최소 Hz
-        maximum_hz=54.0,  # 최대 Hz
-        fallback_hz=43.0,  # fallback Hz
-        logger_cfg=LoggerConfig(name="PumpOptimizer", level=20),  # INFO 레벨
+        # target_nox=20.0,  # 목표 NOx
+        # p_feasible=0.90,  # 90% 신뢰도
+        # n_candidates=50,  # 후보 개수
+        # round_to_int=True,  # 정수 반올림
+        # minimum_hz=38.0,  # 최소 Hz
+        # maximum_hz=54.0,  # 최대 Hz
+        # fallback_hz=43.0,  # fallback Hz
+        # logger_cfg=LoggerConfig(name="PumpOptimizer", level=20),  # INFO 레벨
     )
 
     # RuleConfig 초기화
