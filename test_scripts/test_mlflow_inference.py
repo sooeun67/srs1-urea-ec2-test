@@ -89,6 +89,7 @@ def setup_preprocessing_config() -> tuple[
     Preprocessor,
     GPModelConfig,
     GaussianProcessNOxModel,
+    OptimizationConfig,
     PumpOptimizer,
 ]:
     """전처리 설정 및 GP 모델, PumpOptimizer 초기화"""
@@ -122,17 +123,8 @@ def setup_preprocessing_config() -> tuple[
         model_config=gp_cfg,
     )
 
-    # OptimizationConfig 초기화
-    opt_cfg = OptimizationConfig(
-        # target_nox=20.0,  # 목표 NOx
-        # p_feasible=0.90,  # 90% 신뢰도
-        # n_candidates=50,  # 후보 개수
-        # round_to_int=True,  # 정수 반올림
-        # minimum_hz=38.0,  # 최소 Hz
-        # maximum_hz=54.0,  # 최대 Hz
-        # fallback_hz=43.0,  # fallback Hz
-        # logger_cfg=LoggerConfig(name="PumpOptimizer", level=20),  # INFO 레벨
-    )
+    # OptimizationConfig 초기화 (기본값 사용)
+    opt_cfg = OptimizationConfig()
 
     # RuleConfig 초기화
     rule_cfg = RuleConfig()
@@ -145,7 +137,7 @@ def setup_preprocessing_config() -> tuple[
         rule_config=rule_cfg,
     )
 
-    return cc, infer_cfg, preprocessor, gp_cfg, gp_model, pump_optimizer
+    return cc, infer_cfg, preprocessor, gp_cfg, gp_model, opt_cfg, pump_optimizer
 
 
 def select_run_id() -> str:
@@ -473,7 +465,7 @@ def main() -> None:
 
     # 0) 전처리 설정 및 GP 모델, PumpOptimizer 초기화
     print("⚙️ 전처리 설정 및 GP 모델, PumpOptimizer 초기화 중...")
-    cc, infer_cfg, preprocessor, gp_cfg, gp_model, pump_optimizer = (
+    cc, infer_cfg, preprocessor, gp_cfg, gp_model, opt_cfg, pump_optimizer = (
         setup_preprocessing_config()
     )
     print(f"✅ 전처리 설정 완료: {cc.plant_code}")
@@ -575,10 +567,14 @@ def main() -> None:
             # Hz 추천 수행
             try:
                 recommendation = pump_optimizer.predict_pump_hz(
-                    target_nox=20.0,  # 목표 NOx
+                    target_nox=opt_cfg.target_nox,
+                    pump_bounds=opt_cfg.pump_bounds,
                     current_oxygen=float(current_row["BR1_EO_O2_A"]),
                     current_temp=float(current_row["ICF_CCS_FG_T_1"]),
                     current_target=float(current_row["ICF_TMS_NOX_A"]),
+                    p_feasible=opt_cfg.p_feasible,
+                    n_candidates=opt_cfg.n_candidates,
+                    round_to_int=opt_cfg.round_to_int,
                 )
 
                 # 추천 결과 출력
