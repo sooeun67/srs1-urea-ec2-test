@@ -111,6 +111,10 @@ class GPModelConfig:
 @dataclass(frozen=True)
 class LGBMModelConfig:
 
+    # === 시간 범위 설정 ===
+    start_time: Optional[str] = "2025-07-01 00:41:30"
+    end_time: Optional[str] = "2025-08-11 23:20:00"
+
     # === LightGBM 기본 설정 ===
     lgbm_random_state: int = 42
     lgbm_n_estimators: int = 200
@@ -169,6 +173,22 @@ class LGBMModelConfig:
 
         # None 값 제거
         return {k: v for k, v in params.items() if v is not None}
+
+    # === 학습 샘플 가중치 설정 ===
+
+    # 학습 샘플 가중치 설정 (1) - Spike 구간
+    weight_spike_delta_sec: int = 60  # 예측 시점 (초) -> 얼마 뒤 NOx를 예측할 것인지?
+    weight_spike_step_sec: int = 30  # 연속 판정 간격 (초)
+    weight_spike_thr_low: float = 25.0  # Spike 진입 전 저농도 기준
+    weight_spike_thr_high: float = 40.0  # Spike 진입 고농도 기준
+    weight_spike_lookback_sec: int = 300  # 고농도 진입 직전 window 길이 (초)
+    weight_spike_pos: float = 10.0  # spike label=1 가중치
+    weight_spike_neg: float = 1.0  # spike label=0 기본 가중치
+
+    # 학습 샘플 가중치 설정 (2) - Spike가 아니고 NOx 고농도 구간
+    weight_high_nox_bound_lower: float = 35.0
+    weight_high_nox_bound_upper: float = 42.5
+    weight_high_nox: float = 3.0
 
     # === 저장 경로들 ===
 

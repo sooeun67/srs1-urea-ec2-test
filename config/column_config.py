@@ -257,26 +257,25 @@ class ColumnConfig:
         return {eq: [val, icf] for eq, val, icf in zip(a, b, c)}
 
 
-def _prepare_cc_kwargs(
-    plant_code: Optional[str], overrides: Optional[Dict[str, Any]] = None
-) -> Dict[str, Any]:
-    """프리셋 + 오버라이드 병합 후 안전한 kwargs 생성 (list→tuple 변환 포함)"""
-    merged: Dict[str, Any] = {}
+# def _prepare_cc_kwargs(
+#     plant_code: Optional[str],
+#     overrides: Optional[Dict[str, Any]] = None
+# ) -> Dict[str, Any]:
+#     """프리셋 + 오버라이드 병합 후 안전한 kwargs 생성 (list→tuple 변환 포함)"""
+#     merged: Dict[str, Any] = {}
 
-    if plant_code:
-        preset = PLANT_CODE_PRESETS.get(str(plant_code).upper())
-        if preset:
-            merged.update(preset)
+#     if plant_code:
+#         preset = PLANT_CODE_PRESETS.get(str(plant_code).upper())
+#         if preset:
+#             merged.update(preset)
 
-    if overrides:
-        merged.update({k: v for k, v in overrides.items() if v is not None})
+#     if overrides:
+#         merged.update({k: v for k, v in overrides.items() if v is not None})
 
-    # list → tuple (frozen dataclass 안전성)
-    if "cols_temp" in merged and isinstance(merged["cols_temp"], list):
-        merged["cols_temp"] = tuple(merged["cols_temp"])
-    if "set_lgbm_feature_columns" in merged and isinstance(
-        merged["set_lgbm_feature_columns"], list
-    ):
-        merged["set_lgbm_feature_columns"] = tuple(merged["set_lgbm_feature_columns"])
+#     # list → tuple (frozen dataclass 안전성)
+#     if "cols_temp" in merged and isinstance(merged["cols_temp"], list):
+#         merged["cols_temp"] = tuple(merged["cols_temp"])
+#     if "set_lgbm_feature_columns" in merged and isinstance(merged["set_lgbm_feature_columns"], list):
+#         merged["set_lgbm_feature_columns"] = tuple(merged["set_lgbm_feature_columns"])
 
-    return merged
+#     return merged
