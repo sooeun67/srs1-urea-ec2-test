@@ -52,7 +52,9 @@ import requests
 # 새로운 전처리 파이프라인 import
 from config.column_config import ColumnConfig
 from config.preprocessing_config import InferPreprocessingConfig
+from config.model_config import GPModelConfig
 from src.data_processing.preprocessor import Preprocessor
+from src.models.gaussian_process import GaussianProcessNOxModel
 from utils.logger import LoggerConfig
 
 # pandas 출력 설정: 모든 컬럼 표시
@@ -78,10 +80,14 @@ def get_env(name: str, default: Optional[str] = None) -> str:
     return v if v is not None else ("" if default is None else str(default))
 
 
-def setup_preprocessing_config() -> (
-    tuple[ColumnConfig, InferPreprocessingConfig, Preprocessor]
-):
-    """전처리 설정 초기화"""
+def setup_preprocessing_config() -> tuple[
+    ColumnConfig,
+    InferPreprocessingConfig,
+    Preprocessor,
+    GPModelConfig,
+    GaussianProcessNOxModel,
+]:
+    """전처리 설정 및 GP 모델 초기화"""
     # ColumnConfig 초기화 (SRS1 프리셋 적용)
     cc = ColumnConfig(plant_code="SRS1")
 
@@ -99,7 +105,20 @@ def setup_preprocessing_config() -> (
         prep_infer_cfg=infer_cfg,
     )
 
-    return cc, infer_cfg, preprocessor
+    # GPModelConfig 초기화
+    gp_cfg = GPModelConfig(
+        column_config=cc,
+        plant_code="SRS1",
+        logger_cfg=LoggerConfig(name="GPModel", level=20),  # INFO 레벨
+    )
+
+    # GaussianProcessNOxModel 초기화
+    gp_model = GaussianProcessNOxModel(
+        column_config=cc,
+        model_config=gp_cfg,
+    )
+
+    return cc, infer_cfg, preprocessor, gp_cfg, gp_model
 
 
 def select_run_id() -> str:
@@ -422,13 +441,14 @@ def aggregate_last_20s_to_5s(
 
 def main() -> None:
     print("🚀" + "=" * 58)
-    print("🚀 MLflow 모델 기반 실시간 추론 테스트 시작")
+    print("🚀 GP 모델 기반 실시간 추론 테스트 시작")
     print("🚀" + "=" * 58)
 
-    # 0) 전처리 설정 초기화
-    print("⚙️ 전처리 설정 초기화 중...")
-    cc, infer_cfg, preprocessor = setup_preprocessing_config()
+    # 0) 전처리 설정 및 GP 모델 초기화
+    print("⚙️ 전처리 설정 및 GP 모델 초기화 중...")
+    cc, infer_cfg, preprocessor, gp_cfg, gp_model = setup_preprocessing_config()
     print(f"✅ 전처리 설정 완료: {cc.plant_code}")
+    print(f"✅ GP 모델 초기화 완료: {gp_model.model_config.plant_code}")
 
     tracking_uri = os.environ.get("MLFLOW_TRACKING_URI")
     if tracking_uri:
@@ -446,13 +466,23 @@ def main() -> None:
     run_id = select_run_id()
     print(f"🏷️ 사용 RUN_ID: {run_id}")
 
-    # 2) 모델 다운로드
-    model_root = download_model(run_id=run_id, model_name="urea_gp_model")
+    # 2) GP 모델 로드 (기존 MLflow 모델 대신)
+    model_file = f"mlflow_artifacts/{run_id}/urea_gp_model/gp_model.joblib"
+    if not os.path.exists(model_file):
+        # 대안 경로 시도
+        model_file = f"mlflow_artifacts/{run_id}/gp_model.joblib"
+        if not os.path.exists(model_file):
+            raise FileNotFoundError(f"GP 모델 파일을 찾을 수 없습니다: {model_file}")
 
-    # 3) 모델 파일 선택 및 로드
-    model_file = pick_model_file(model_root)
-    model = joblib.load(model_file)
-    print(f"✅ 모델 로드 완료: {model_file}")
+    # GP 모델 로드
+    gp_model.load(model_file)
+    print(f"✅ GP 모델 로드 완료: {model_file}")
+
+    # 모델 정보 출력
+    model_info = gp_model.get_model_info()
+    print(
+        f"📊 모델 정보: {model_info['status']}, 학습 샘플: {model_info.get('n_train', 'N/A')}"
+    )
 
     # 4) Influx 최근 데이터 조회
     df = query_recent_influx()
@@ -485,12 +515,38 @@ def main() -> None:
     print(f"📋 피처 컬럼: {influx_feature_cols}")
     print(X)
 
-    # 7) 예측: 5초 윈도우 평균 입력만 사용하여 각 시점의 NOx 평균 예측 (결측 구간 제외)
+    # 7) GP 모델 예측: 5초 윈도우 평균 입력만 사용하여 각 시점의 NOx 예측 (결측 구간 제외)
     if len(X) > 0:
-        pred = model.predict(X)
-        for t, v in zip(valid_times, pred):
-            val = v[0] if hasattr(v, "__len__") else v
-            print(f"🎯 {t} → NOx mean={float(val):.3f}")
+        print("🧠 GP 모델 예측 시작...")
+        pred_mean, pred_std = gp_model.predict(X, return_std=True)
+
+        # 예측 결과를 DataFrame에 추가
+        agg_with_pred = agg.copy()
+        agg_with_pred[cc.col_pred_mean] = np.nan
+        agg_with_pred[cc.col_pred_ucb] = np.nan
+
+        # 유효한 예측만 결과에 반영
+        for i, (t, mean_val, std_val) in enumerate(
+            zip(valid_times, pred_mean, pred_std)
+        ):
+            # UCB (Upper Confidence Bound) 계산
+            ucb_val = mean_val + 1.96 * std_val  # 95% 신뢰구간 상한
+
+            # 결과 출력
+            print(
+                f"🎯 {t} → NOx mean={float(mean_val):.3f} ± {float(std_val):.3f} (UCB: {float(ucb_val):.3f})"
+            )
+
+            # DataFrame에 결과 저장
+            mask = agg_with_pred["_time_gateway"] == t
+            agg_with_pred.loc[mask, cc.col_pred_mean] = mean_val
+            agg_with_pred.loc[mask, cc.col_pred_ucb] = ucb_val
+
+        # 최종 결과 출력
+        print("\n📊 최종 예측 결과:")
+        result_cols = ["_time_gateway", cc.col_pred_mean, cc.col_pred_ucb]
+        print(agg_with_pred[result_cols].dropna())
+
     else:
         print("⚠️ 예측 가능한(결측 없는) 5초 구간이 없습니다.")
 
