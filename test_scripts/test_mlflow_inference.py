@@ -714,7 +714,8 @@ def main() -> None:
 
         # LGBM 전처리: 요약통계량 Feature 생성
         lgbm_suggested_df, lgbm_cols_x_stat = lgbm_preprocessor.make_interval_features(
-            agg_with_recommendations
+            agg_with_recommendations,
+            column_mapping=column_mapping  # [0910]매핑 정보 전달
         )
 
         # LGBM 모델 설정 업데이트
