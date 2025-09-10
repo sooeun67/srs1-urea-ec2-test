@@ -138,6 +138,7 @@ def setup_preprocessing_config() -> tuple[
         lgbm_feature_columns_original=cc.lgbm_feature_columns,
         lgbm_feature_columns_summary=[],  # 나중에 업데이트
         # native_model_path=lgbm_model_path,  # [0910] 주석 처리
+        model_path="SRS1-ec2-test/mlflow_artifacts/8df2907f144a4dcd80fe0d834be77f65/urea_gp_model/lgbm_model.joblib",
         logger_cfg=LoggerConfig(name="LGBMModel", level=20),
     )
 
@@ -713,11 +714,11 @@ def main() -> None:
         print("\n🧠 LGBM 모델 예측 및 Hz 조정 시작...")
 
         # LGBM 전처리: 요약통계량 Feature 생성
-        # LGBM 전처리 전에 컬럼명 매핑
+        # [0910] LGBM 전처리 전에 컬럼명 매핑
         df_mapped = agg_with_recommendations.copy()
         column_mapping = {
             "BR1_EO_O2_A": "br1_eo_o2_a",
-            "ICF_CCS_FG_T_1": "icf_ccs_fg_t_1", 
+            "ICF_CCS_FG_T_1": "icf_ccs_fg_t_1",
             "ICF_SCS_FG_T_1": "icf_scs_fg_t_1",
             "ICF_TMS_NOX_A": "icf_tms_nox_a",
         }
