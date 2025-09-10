@@ -135,7 +135,7 @@ def setup_preprocessing_config() -> tuple[
 
     # LGBMModelConfig 초기화
     lgbm_cfg = LGBMModelConfig(
-        column_config=cc,
+        # column_config=cc,     [0910] 주석 처리
         plant_code="SRS1",
         logger_cfg=LoggerConfig(name="LGBMModel", level=20),  # INFO 레벨
     )
@@ -148,7 +148,7 @@ def setup_preprocessing_config() -> tuple[
 
     # LGBMNOxModel 초기화
     lgbm_model = LGBMNOxModel(
-        column_config=cc,
+        # column_config=cc,     [0910] 주석 처리
         model_config=lgbm_cfg,
     )
 
