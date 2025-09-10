@@ -137,7 +137,7 @@ def setup_preprocessing_config() -> tuple[
     lgbm_cfg = LGBMModelConfig(
         lgbm_feature_columns_original=cc.lgbm_feature_columns,
         lgbm_feature_columns_summary=[],  # 나중에 업데이트
-        native_model_path=lgbm_model_path,  # 나중에 설정
+        # native_model_path=lgbm_model_path,  # [0910] 주석 처리
         logger_cfg=LoggerConfig(name="LGBMModel", level=20),
     )
 
@@ -577,6 +577,12 @@ def main() -> None:
     )
     if not os.path.exists(lgbm_model_path):
         raise FileNotFoundError(f"LGBM 모델 파일을 찾을 수 없습니다: {lgbm_model_path}")
+
+    # [0910] 수정 (optimize_pump.py 방식)
+    # LGBM 모델 설정 업데이트
+    lgbm_cfg.native_model_path = lgbm_model_path
+    lgbm_cfg.lgbm_feature_columns_original = cc.lgbm_feature_columns
+    lgbm_cfg.lgbm_feature_columns_summary = []  # 나중에 업데이트
 
     # LGBM 모델 로드
     lgbm_model.load(lgbm_model_path)
