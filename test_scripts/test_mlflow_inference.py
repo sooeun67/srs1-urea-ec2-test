@@ -137,7 +137,7 @@ def setup_preprocessing_config() -> tuple[
     lgbm_cfg = LGBMModelConfig(
         lgbm_feature_columns_original=cc.lgbm_feature_columns,
         lgbm_feature_columns_summary=[],  # 나중에 업데이트
-        native_model_path=lgbm_model_path,
+        # native_model_path=lgbm_model_path,  # [0910] 주석 처리
         logger_cfg=LoggerConfig(name="LGBMModel", level=20),
     )
 
@@ -721,7 +721,7 @@ def main() -> None:
         lgbm_cols_x_original = cc.lgbm_feature_columns
         lgbm_cfg.lgbm_feature_columns_original = list(lgbm_cols_x_original)
         lgbm_cfg.lgbm_feature_columns_summary = list(lgbm_cols_x_stat)
-        lgbm_cfg.native_model_path = lgbm_model_path
+        # lgbm_cfg.native_model_path = lgbm_model_path
 
         # LGBM 모델 예측 및 Hz 조정
         lgbm_suggested_df = lgbm_adjuster.predict_and_adjust(
