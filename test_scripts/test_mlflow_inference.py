@@ -531,9 +531,8 @@ def main() -> None:
         pump_optimizer,
         lgbm_adjuster,
     ) = setup_preprocessing_config()
-    print(f"✅ 전처리 설정 완료: {cc.plant_code}")
     print(f"✅ GP 모델 초기화 완료: {gp_model.model_config.plant_code}")
-    print(f"✅ LGBM 모델 초기화 완료: {lgbm_model.model_config.plant_code}")
+    print(f"✅ LGBM 모델 초기화 완료: {lgbm_model.model_config.__class__.__name__}")
     print(f"✅ PumpOptimizer 초기화 완료")
     print(f"✅ LGBM Adjuster 초기화 완료")
 
