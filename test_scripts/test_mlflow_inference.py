@@ -133,11 +133,12 @@ def setup_preprocessing_config() -> tuple[
         logger_cfg=LoggerConfig(name="GPModel", level=20),  # INFO 레벨
     )
 
-    # LGBMModelConfig 초기화
+    # LGBMModelConfig 초기화 [0910] column_config와 plant_code 모두 삭제
     lgbm_cfg = LGBMModelConfig(
-        # column_config=cc,     [0910] 주석 처리
-        plant_code="SRS1",
-        logger_cfg=LoggerConfig(name="LGBMModel", level=20),  # INFO 레벨
+        lgbm_feature_columns_original=cc.lgbm_feature_columns,
+        lgbm_feature_columns_summary=[],  # 나중에 업데이트
+        native_model_path=lgbm_model_path,  # 나중에 설정
+        logger_cfg=LoggerConfig(name="LGBMModel", level=20),
     )
 
     # GaussianProcessNOxModel 초기화
@@ -147,8 +148,9 @@ def setup_preprocessing_config() -> tuple[
     )
 
     # LGBMNOxModel 초기화
+    # [0910] 수정 (optimize_pump.py 방식)
     lgbm_model = LGBMNOxModel(
-        # column_config=cc,     [0910] 주석 처리
+        column_config=cc,  # 추가
         model_config=lgbm_cfg,
     )
 
