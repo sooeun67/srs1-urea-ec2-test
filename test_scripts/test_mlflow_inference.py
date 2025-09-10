@@ -713,9 +713,21 @@ def main() -> None:
         print("\n🧠 LGBM 모델 예측 및 Hz 조정 시작...")
 
         # LGBM 전처리: 요약통계량 Feature 생성
+        # LGBM 전처리 전에 컬럼명 매핑
+        df_mapped = agg_with_recommendations.copy()
+        column_mapping = {
+            "BR1_EO_O2_A": "br1_eo_o2_a",
+            "ICF_CCS_FG_T_1": "icf_ccs_fg_t_1", 
+            "ICF_SCS_FG_T_1": "icf_scs_fg_t_1",
+            "ICF_TMS_NOX_A": "icf_tms_nox_a",
+        }
+        for influx_col, config_col in column_mapping.items():
+            if influx_col in df_mapped.columns:
+                df_mapped[config_col] = df_mapped[influx_col]
+
+        # LGBM 전처리 (매핑된 DataFrame 사용)
         lgbm_suggested_df, lgbm_cols_x_stat = lgbm_preprocessor.make_interval_features(
-            agg_with_recommendations,
-            column_mapping=column_mapping  # [0910]매핑 정보 전달
+            df_mapped
         )
 
         # LGBM 모델 설정 업데이트
