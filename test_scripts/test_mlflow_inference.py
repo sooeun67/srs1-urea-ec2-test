@@ -748,6 +748,18 @@ def main() -> None:
             if col in lgbm_suggested_df.columns:
                 agg_with_recommendations[col] = lgbm_suggested_df[col].values
 
+        # [0910] col_hz_final 설정 (optimize_pump.py 방식)
+        # 기본값: LGBM 조정된 Hz 사용 (act_snr_pmp_bo_4)
+        if cc.col_lgbm_db_hz_lgbm_adj in agg_with_recommendations.columns:
+            agg_with_recommendations[cc.col_hz_final] = agg_with_recommendations[
+                cc.col_lgbm_db_hz_lgbm_adj
+            ]
+        else:
+            # LGBM 결과가 없으면 GP 전체 규칙 결과 사용
+            agg_with_recommendations[cc.col_hz_final] = agg_with_recommendations[
+                cc.col_hz_full_rule
+            ]
+
         print(f"✅ LGBM 모델 예측 완료: {len(lgbm_suggested_df)}개 시점")
 
         # 최종 결과 출력 (처음 10개 행만)
@@ -767,6 +779,10 @@ def main() -> None:
             result_cols.append(cc.col_lgbm_db_pred_nox)
         if cc.col_lgbm_db_hz_lgbm_adj in agg_with_recommendations.columns:
             result_cols.append(cc.col_lgbm_db_hz_lgbm_adj)
+
+        # [0910] col_hz_final 추가 (최종 Hz 추천 값)
+        if cc.col_hz_final in agg_with_recommendations.columns:
+            result_cols.append(cc.col_hz_final)
 
         available_cols = [
             c for c in result_cols if c in agg_with_recommendations.columns
