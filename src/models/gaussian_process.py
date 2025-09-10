@@ -20,7 +20,7 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import Matern, WhiteKernel, ConstantKernel
 
 from config.column_config import ColumnConfig
-from config.model_config import GPModelConfig
+from config.model_config import GPModelConfig, LGBMModelConfig  # [0910] 경로 수정
 
 from utils.logger import get_logger  # LoggerConfig는 model_config가 들고 있음
 

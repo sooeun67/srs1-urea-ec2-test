@@ -15,7 +15,7 @@ import pandas as pd
 from config.column_config import ColumnConfig
 from config.optimization_config import OptimizationConfig
 from config.rule_config import RuleConfig
-from models.gaussian_process import GaussianProcessNOxModel
+from src.models.gaussian_process import GaussianProcessNOxModel # [0910] 경로 수정
 from utils.logger import get_logger
 
 
