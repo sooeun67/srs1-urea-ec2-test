@@ -207,8 +207,6 @@ class InferPreprocessingConfig(CommonPreprocessingConfig):
 
 
 # 3) GP 전처리
-
-
 # === Train, GP ===
 @dataclass(frozen=True)
 class GPTrainPreprocessingConfig(TrainPreprocessingConfig):
@@ -218,7 +216,7 @@ class GPTrainPreprocessingConfig(TrainPreprocessingConfig):
     end_time: Optional[str] = "2025-08-12 23:59:59"
 
     # === 학습 데이터 정책 ===
-    min_samples: int = 8
+    # 250910 preprocessor.py 변경에 따라 (min_samples: int = 8) 제거(gc.min_samples -> gc.sample_size)
     sample_size: Optional[int] = 1000  # 샘플링 개수
     random_state: int = 42
     dropna_required: bool = True  # 결측 제거
@@ -258,29 +256,6 @@ class GPTrainPreprocessingConfig(TrainPreprocessingConfig):
 #    pass
 
 
-# LGBM 요약통계량 column 규칙
-def make_summary_feature_names(
-    source_cols: Sequence[str],
-    windows_summary_sec: Iterable[int],
-    windows_rate_sec: Iterable[int],
-) -> List[str]:
-    """
-    윈도우 설정과 원본 컬럼 목록으로 '실행 없이' 생성될 요약통계/모멘텀 컬럼명을 결정론적으로 생성.
-    - 통계: {col}_mean_{s}s, {col}_std_{s}s
-    - 모멘텀: {col}_momentum_max_up_{s}s, {col}_momentum_max_down_{s}s
-    """
-    names: List[str] = []
-    for col in source_cols:
-        for s in windows_summary_sec:
-            names += [f"{col}_mean_{s}s", f"{col}_std_{s}s"]
-        for s in windows_rate_sec:
-            names += [
-                f"{col}_momentum_max_up_{s}s",
-                f"{col}_momentum_max_down_{s}s",
-            ]
-    return names
-
-
 # 4) LGBM 전처리
 @dataclass(frozen=True)
 class _LGBMWindowsMixin:  # ← Common 상속 안 함!
@@ -294,55 +269,13 @@ class _LGBMWindowsMixin:  # ← Common 상속 안 함!
     # window(초) 설정 (2) - 변화율(rate per sec) 최소/최대
     windows_rate_sec: Iterable[int] = (15, 30, 60)
 
-    # === 요약통계량 column명 ===
-
-    # ✅ 요약통계/모멘텀 생성 후 "실제 생성된 컬럼명"을 보관
-    # - `generate_interval_summary_features_time`이 생성할 새로운 column들
-    # - 생성자에서 받지 않음(자동 생성 전용)
-    summary_feature_columns: List[str] = field(init=False, default_factory=list)
-
-    # 자동 생성
-    def __post_init__(self):
-        # 상위 __post_init__ (Common→Train/Infer) 먼저
-        try:
-            super().__post_init__()
-        except AttributeError:
-            pass
-
-        # 반드시 ColumnConfig에서 지정된 col_*만 사용 (fallback 없음)
-        # - ❗ fallback 없음: 반드시 ColumnConfig.set_lgbm_feature_columns가 지정돼 있어야 함
-        source_cols: Sequence[str] = (
-            self.column_config.lgbm_feature_columns
-        )  # 비어있으면 위에서 ValueError
-
-        names = make_summary_feature_names(
-            source_cols=source_cols,
-            windows_summary_sec=self.windows_summary_sec,
-            windows_rate_sec=self.windows_rate_sec,
-        )
-        object.__setattr__(self, "summary_feature_columns", names)
-
 
 # === Train, LGBM ===
 # - 공통 설정을 포함하면서 학습 배치 파이프라인에 맞는 필드 추가
 @dataclass(frozen=True)
 class LGBMTrainPreprocessingConfig(_LGBMWindowsMixin, TrainPreprocessingConfig):
 
-    # === 학습 샘플 가중치 설정 ===
-
-    # 학습 샘플 가중치 설정 (1) - Spike 구간
-    weight_spike_delta_sec: int = 60  # 예측 시점 (초) -> 얼마 뒤 NOx를 예측할 것인지?
-    weight_spike_step_sec: int = 30  # 연속 판정 간격 (초)
-    weight_spike_thr_low: float = 25.0  # Spike 진입 전 저농도 기준
-    weight_spike_thr_high: float = 40.0  # Spike 진입 고농도 기준
-    weight_spike_lookback_sec: int = 300  # 고농도 진입 직전 window 길이 (초)
-    weight_spike_pos: float = 10.0  # spike label=1 가중치
-    weight_spike_neg: float = 1.0  # spike label=0 기본 가중치
-
-    # 학습 샘플 가중치 설정 (2) - Spike가 아니고 NOx 고농도 구간
-    weight_high_nox_bound_lower: float = 35.0
-    weight_high_nox_bound_upper: float = 42.5
-    weight_high_nox: float = 3.0
+    pass
 
 
 # === Infer, LGBM ===

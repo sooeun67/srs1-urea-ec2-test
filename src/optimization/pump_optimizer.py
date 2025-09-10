@@ -15,7 +15,7 @@ import pandas as pd
 from config.column_config import ColumnConfig
 from config.optimization_config import OptimizationConfig
 from config.rule_config import RuleConfig
-from src.models.gaussian_process import GaussianProcessNOxModel
+from models.gaussian_process import GaussianProcessNOxModel
 from utils.logger import get_logger
 
 
@@ -37,9 +37,10 @@ class PumpOptimizer:
         # 오직 opt_config.logger_cfg만 사용
         cfg = getattr(self.opt_config, "logger_cfg", None)
         if cfg is None:
-            raise RuntimeError("opt_config.logger_cfg가 없습니다. OptimizationConfig에 logger_cfg를 설정하세요.")
+            raise RuntimeError(
+                "opt_config.logger_cfg가 없습니다. OptimizationConfig에 logger_cfg를 설정하세요."
+            )
         self.logger = get_logger(cfg)
-
 
     # ----------------------
     # 내부 유틸 (내장: 시작 로그 생략, 디버그만)
@@ -76,11 +77,13 @@ class PumpOptimizer:
                         f"정수 그리드를 만들 수 없음: bounds=({lo}, {hi}), n={n_candidates}"
                     )
                 grid = grid_i.astype(float)
-                
+
         self.logger.debug(f"그리드 생성 완료:")
         a = grid
         if np.size(a) <= 10:
-            self.logger.debug(np.array2string(np.asarray(a), precision=6, separator=", "))
+            self.logger.debug(
+                np.array2string(np.asarray(a), precision=6, separator=", ")
+            )
         else:
             self.logger.debug(f"size={np.size(a)}")
             self.logger.debug(f"min ={np.nanmin(a):.6g}")
@@ -106,7 +109,9 @@ class PumpOptimizer:
                 return (lo, hi)
         lo_opt, hi_opt = rc.bounds_o2_else
         if lo_opt is None and hi_opt is None:
-            self.logger.debug(f"[base] O2={o2} else 케이스 → 고정 bounds=({lo_g}, {lo_g})")
+            self.logger.debug(
+                f"[base] O2={o2} else 케이스 → 고정 bounds=({lo_g}, {lo_g})"
+            )
             return (lo_g, lo_g)
         lo = lo_g if lo_opt is None else float(lo_opt)
         hi = hi_g if hi_opt is None else float(hi_opt)
@@ -114,7 +119,11 @@ class PumpOptimizer:
         return (lo, hi)
 
     def _bounds_dynamic(
-        self, temp_in: float | None, temp_out: float | None, tgt: float | None, o2: float | None
+        self,
+        temp_in: float | None,
+        temp_out: float | None,
+        tgt: float | None,
+        o2: float | None,
     ) -> Tuple[float, float]:
         rc = self.rule_config
         lo_g, hi_g = self.opt_config.pump_bounds
@@ -144,9 +153,11 @@ class PumpOptimizer:
         if (has_tgt and (tgt <= rc.dyn_nox_low)) or (has_o2 and (o2 > rc.dyn_o2_high)):
             self.logger.debug(f"[dyn] 저 NOx 혹은 고 O2 조건 → ({lo_g},{lo_g})")
             return (lo_g, lo_g)
-        if (has_temp_in and (temp_in >= rc.dyn_temp_in_high)) or (
-            has_temp_out and (temp_out >= rc.dyn_temp_out_high)
-        ) or (has_o2 and (o2 <= rc.dyn_o2_low)):
+        if (
+            (has_temp_in and (temp_in >= rc.dyn_temp_in_high))
+            or (has_temp_out and (temp_out >= rc.dyn_temp_out_high))
+            or (has_o2 and (o2 <= rc.dyn_o2_low))
+        ):
             self.logger.debug(f"[dyn] 고온 혹은 저 O2 조건 → ({hi_g},{hi_g})")
             return (hi_g, hi_g)
 
@@ -171,7 +182,9 @@ class PumpOptimizer:
     ) -> Dict[str, Any]:
         """GP+UCB 기반 단일 시점 펌프 Hz 추천 시작"""
         # 시작 로그 + 실행 파일
-        self.logger.info("펌프 주파수 추천 시작(GP+UCB): 단일 시점 입력에서 목표 NOx 만족 Hz 선택")
+        self.logger.info(
+            "펌프 주파수 추천 시작(GP+UCB): 단일 시점 입력에서 목표 NOx 만족 Hz 선택"
+        )
         exec_file = os.path.basename(globals().get("__file__", "interactive"))
         self.logger.debug(f"실행 파일: {exec_file}")
 
@@ -225,10 +238,14 @@ class PumpOptimizer:
                 cc.col_target_nox: (
                     np.nan if tgt_nox is None or pd.isna(tgt_nox) else float(tgt_nox)
                 ),
-                cc.col_safety_gap: (np.nan if safety_gap is None else float(safety_gap)),
+                cc.col_safety_gap: (
+                    np.nan if safety_gap is None else float(safety_gap)
+                ),
                 cc.col_p_feasible: float(p),
                 cc.col_round_flag: bool(rint),
-                cc.col_n_candidates: (None if n_candidates is None else int(n_candidates)),
+                cc.col_n_candidates: (
+                    None if n_candidates is None else int(n_candidates)
+                ),
                 cc.col_grid_min: float(grid.min()),
                 cc.col_grid_max: float(grid.max()),
                 cc.col_grid_size: int(grid.size),
@@ -259,7 +276,9 @@ class PumpOptimizer:
             self.logger.debug(f"grid:")
             a = grid
             if np.size(a) <= 10:
-                self.logger.debug(np.array2string(np.asarray(a), precision=6, separator=", "))
+                self.logger.debug(
+                    np.array2string(np.asarray(a), precision=6, separator=", ")
+                )
             else:
                 self.logger.debug(f"size={np.size(a)}")
                 self.logger.debug(f"min ={np.nanmin(a):.6g}")
@@ -277,7 +296,9 @@ class PumpOptimizer:
         self.logger.debug(f"grid:")
         a = grid
         if np.size(a) <= 10:
-            self.logger.debug(np.array2string(np.asarray(a), precision=6, separator=", "))
+            self.logger.debug(
+                np.array2string(np.asarray(a), precision=6, separator=", ")
+            )
         else:
             self.logger.debug(f"size={np.size(a)}")
             self.logger.debug(f"min ={np.nanmin(a):.6g}")
@@ -296,21 +317,24 @@ class PumpOptimizer:
         self.logger.debug(f"Xcand(shape={Xcand.shape}):")
         a = Xcand
         if np.size(a) <= 10:
-            self.logger.debug(np.array2string(np.asarray(a), precision=6, separator=", "))
+            self.logger.debug(
+                np.array2string(np.asarray(a), precision=6, separator=", ")
+            )
         else:
             self.logger.debug(f"size={np.size(a)}")
             self.logger.debug(f"min ={np.nanmin(a):.6g}")
             self.logger.debug(f"max ={np.nanmax(a):.6g}")
         self.logger.debug(f"head={np.asarray(a)[:3]}")
         self.logger.debug(f"tail={np.asarray(a)[-3:]}")
-        
 
         mu, sigma = self.model.predict(Xcand, return_std=True)
         ucb = mu + z * sigma
         self.logger.debug(f"mu:")
         a = mu
         if np.size(a) <= 10:
-            self.logger.debug(np.array2string(np.asarray(a), precision=6, separator=", "))
+            self.logger.debug(
+                np.array2string(np.asarray(a), precision=6, separator=", ")
+            )
         else:
             self.logger.debug(f"size={np.size(a)}")
             self.logger.debug(f"min ={np.nanmin(a):.6g}")
@@ -320,7 +344,9 @@ class PumpOptimizer:
         self.logger.debug(f"sigma:")
         a = sigma
         if np.size(a) <= 10:
-            self.logger.debug(np.array2string(np.asarray(a), precision=6, separator=", "))
+            self.logger.debug(
+                np.array2string(np.asarray(a), precision=6, separator=", ")
+            )
         else:
             self.logger.debug(f"size={np.size(a)}")
             self.logger.debug(f"min ={np.nanmin(a):.6g}")
@@ -330,7 +356,9 @@ class PumpOptimizer:
         self.logger.debug(f"ucb=mu+z*sigma:")
         a = ucb
         if np.size(a) <= 10:
-            self.logger.debug(np.array2string(np.asarray(a), precision=6, separator=", "))
+            self.logger.debug(
+                np.array2string(np.asarray(a), precision=6, separator=", ")
+            )
         else:
             self.logger.debug(f"size={np.size(a)}")
             self.logger.debug(f"min ={np.nanmin(a):.6g}")
@@ -342,7 +370,9 @@ class PumpOptimizer:
         self.logger.debug(f"feasible(ucb<=target={tgt}):")
         a = feasible
         if np.size(a) <= 10:
-            self.logger.debug(np.array2string(np.asarray(a), precision=6, separator=", "))
+            self.logger.debug(
+                np.array2string(np.asarray(a), precision=6, separator=", ")
+            )
         else:
             self.logger.debug(f"size={np.size(a)}")
             self.logger.debug(f"min ={np.nanmin(a):.6g}")
@@ -385,11 +415,15 @@ class PumpOptimizer:
         lo_g, hi_g = self.opt_config.pump_bounds
         out = df_recommend.copy()
 
-        base_col = cc.col_hz_raw_out if cc.col_hz_raw_out in out.columns else cc.col_hz_out
+        base_col = (
+            cc.col_hz_raw_out if cc.col_hz_raw_out in out.columns else cc.col_hz_out
+        )
         base = out[base_col].astype(float).to_numpy()
         o2 = out[cc.col_o2].astype(float).to_numpy()
 
-        temp_in_src = out.get(cc.col_inner_temp, pd.Series(index=out.index, dtype=float))
+        temp_in_src = out.get(
+            cc.col_inner_temp, pd.Series(index=out.index, dtype=float)
+        )
         if temp_in_src is None:
             temp_in_src = pd.Series(index=out.index, dtype=float)
         temp_in_series = temp_in_src.astype(float).where(
@@ -397,9 +431,13 @@ class PumpOptimizer:
         )
 
         temp_in = temp_in_series.astype(float).to_numpy()
-        temp_out = out.get(cc.col_outer_temp, pd.Series(np.nan, index=out.index)).astype(float).to_numpy()
+        temp_out = (
+            out.get(cc.col_outer_temp, pd.Series(np.nan, index=out.index))
+            .astype(float)
+            .to_numpy()
+        )
         nox = out[cc.col_nox].astype(float).to_numpy()
-        
+
         self.logger.debug(f"입력 변수 값:")
         self.logger.debug(f"`hz_raw`  : %.6g", float(np.ravel(base)[0]))
         self.logger.debug(f"`o2`      : %.6g", float(np.ravel(o2)[0]))
@@ -448,7 +486,9 @@ class PumpOptimizer:
     # ----------------------
     # 파이프라인 (단일 시점)
     # ----------------------
-    def run_pipeline(self, df: pd.DataFrame, *, at_time: Optional[pd.Timestamp] = None) -> pd.DataFrame:
+    def run_pipeline(
+        self, df: pd.DataFrame, *, at_time: Optional[pd.Timestamp] = None
+    ) -> pd.DataFrame:
         """실시간 파이프라인 시작: 최신(또는 지정) 시점에서 추천/후처리 실행"""
         self.logger.info("실시간 파이프라인 실행 시작: 단일 시점 추천")
         exec_file = os.path.basename(globals().get("__file__", "interactive"))
@@ -509,8 +549,14 @@ class PumpOptimizer:
             target_nox=oc.target_nox,
             pump_bounds=oc.pump_bounds,
             current_oxygen=float(row[cc.col_o2]) if pd.notna(row[cc.col_o2]) else None,
-            current_temp=float(row[cc.col_temp]) if pd.notna(row.get(cc.col_temp, np.nan)) else None,
-            current_target=float(row[cc.col_nox]) if pd.notna(row[cc.col_nox]) else None,
+            current_temp=(
+                float(row[cc.col_temp])
+                if pd.notna(row.get(cc.col_temp, np.nan))
+                else None
+            ),
+            current_target=(
+                float(row[cc.col_nox]) if pd.notna(row[cc.col_nox]) else None
+            ),
             p_feasible=oc.p_feasible,
             n_candidates=oc.n_candidates,
             round_to_int=oc.round_to_int,

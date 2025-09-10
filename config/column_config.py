@@ -106,6 +106,10 @@ class ColumnConfig:
     col_hz_init_rule: str = "act_snr_pmp_bo_2"  # O2 규칙 적용
     col_hz_full_rule: str = "act_snr_pmp_bo_3"  # O2 + 동적 규칙
 
+    col_hz_final: str = (
+        "act_snr_pmp_bo_0"  # 요소수 Pump Hz 최종 추천 값(웨이블 등에 표시할 값)
+    )
+
     @property
     def target_column(self) -> str:
         return self.col_nox

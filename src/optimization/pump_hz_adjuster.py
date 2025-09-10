@@ -3,7 +3,6 @@
 # ======================
 
 
-
 from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Optional, Sequence
@@ -26,6 +25,7 @@ class LGBMPumpHzAdjuster:
         1) NOx 예측 컬럼 추가
         2) LGBM 소프트 룰로 Hz 보정 컬럼 추가
     """
+
     column_config: ColumnConfig
     model_config: LGBMModelConfig
     rule_config: RuleConfig
@@ -39,8 +39,7 @@ class LGBMPumpHzAdjuster:
     def _ensure_model(self) -> LGBMNOxModel:
         if self.model is None:
             self.model = LGBMNOxModel(
-                column_config=self.column_config,
-                model_config=self.model_config
+                column_config=self.column_config, model_config=self.model_config
             ).load()
         return self.model
 
@@ -67,7 +66,9 @@ class LGBMPumpHzAdjuster:
             raise KeyError(f"[predict_nox] 누락된 피처 컬럼: {missing}")
 
         out = df.copy()
-        out[cc.col_lgbm_db_pred_nox] = model.predict_df(out, feature_cols=feats, allow_nan=allow_nan)
+        out[cc.col_lgbm_db_pred_nox] = model.predict_df(
+            out, feature_cols=feats, allow_nan=allow_nan
+        )
         return out
 
     # --------------------------
@@ -91,19 +92,19 @@ class LGBMPumpHzAdjuster:
         """
         cc, rc, oc = self.column_config, self.rule_config, self.optimization_config
 
-        pred_col    = cc.col_lgbm_db_pred_nox
+        pred_col = cc.col_lgbm_db_pred_nox
         hz_full_col = cc.col_hz_full_rule
-        inner_col   = getattr(cc, "col_inner_temp", None)
-        outer_col   = getattr(cc, "col_outer_temp", None)
+        inner_col = getattr(cc, "col_inner_temp", None)
+        outer_col = getattr(cc, "col_outer_temp", None)
 
         need = [pred_col, hz_full_col]
         missing = [c for c in need if c not in df_pred.columns]
         if missing:
             raise KeyError(f"[apply_lgbm_soft_rule] 필수 컬럼 누락: {missing}")
 
-        thr_nox   = rc.lgbm_cutoff_nox_pred_lower
-        thr_hz    = rc.lgbm_cutoff_hz_suggest_upper
-        thr_t_in  = rc.lgbm_cutoff_inner_temp_lower
+        thr_nox = rc.lgbm_cutoff_nox_pred_lower
+        thr_hz = rc.lgbm_cutoff_hz_suggest_upper
+        thr_t_in = rc.lgbm_cutoff_inner_temp_lower
         thr_t_out = rc.lgbm_cutoff_outer_temp_lower
 
         hz_max = float(oc.maximum_hz)
@@ -111,27 +112,31 @@ class LGBMPumpHzAdjuster:
         out = df_pred.copy()
 
         # HARD / MEDIUM
-        cond_hard   = out[pred_col] > thr_nox
+        cond_hard = out[pred_col] > thr_nox
         cond_medium = cond_hard & (out[hz_full_col] < thr_hz)
 
         # SOFT: 하나만 있으면 그 하나로, 둘 다 있으면 AND, 둘 다 없으면 비활성화
         cond_soft = cond_medium.copy()
         has_any = False
         if inner_col and inner_col in out.columns:
-            cond_soft &= (out[inner_col] > thr_t_in)
+            cond_soft &= out[inner_col] > thr_t_in
             has_any = True
         if outer_col and outer_col in out.columns:
-            cond_soft &= (out[outer_col] > thr_t_out)
+            cond_soft &= out[outer_col] > thr_t_out
             has_any = True
         if not has_any:
             cond_soft = pd.Series(False, index=out.index)
 
-        out[cc.col_lgbm_db_hz_lgbm_adj] = np.where(cond_soft, hz_max, out[hz_full_col].astype(float))
+        out[cc.col_lgbm_db_hz_lgbm_adj] = np.where(
+            cond_soft, hz_max, out[hz_full_col].astype(float)
+        )
 
         if return_flags:
-            out = out.assign(_rule_hard=cond_hard.values,
-                             _rule_medium=cond_medium.values,
-                             _rule_soft=cond_soft.values)
+            out = out.assign(
+                _rule_hard=cond_hard.values,
+                _rule_medium=cond_medium.values,
+                _rule_soft=cond_soft.values,
+            )
         return out
 
     # --------------------------
@@ -149,5 +154,7 @@ class LGBMPumpHzAdjuster:
         이미 피처가 포함된 DF를 받아서:
           1) NOx 예측 → 2) 룰 적용 까지 한번에.
         """
-        df_pred = self.predict_nox(df_with_features, feature_cols=feature_cols, allow_nan=allow_nan)
+        df_pred = self.predict_nox(
+            df_with_features, feature_cols=feature_cols, allow_nan=allow_nan
+        )
         return self.apply_lgbm_soft_rule(df_pred, return_flags=return_flags)

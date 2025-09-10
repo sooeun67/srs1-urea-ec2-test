@@ -72,12 +72,8 @@ from config.column_config import ColumnConfig
 from config.model_config import GPModelConfig
 
 
-__all__ = [
-    "Preprocessor",
-    "GPTrainPreprocessor",
-    "LGBMFeaturePreprocessor",
-    "LGBMTrainPreprocessor",
-]
+
+__all__ = ["Preprocessor","GPTrainPreprocessor","LGBMFeaturePreprocessor","LGBMTrainPreprocessor"]
 
 
 # ============================================================
@@ -106,7 +102,6 @@ def _freq_from_seconds(sec: int) -> str:
         raise ValueError(f"resample_sec must be > 0, got {sec}")
     return f"{int(sec)}s"
 
-
 # datetime 컬럼을 pandas datetime 시리즈로 강제 변환
 def _datetime_series(df: pd.DataFrame, col_datetime: str) -> pd.Series:
     """
@@ -131,7 +126,6 @@ def _datetime_series(df: pd.DataFrame, col_datetime: str) -> pd.Series:
     """
     s = pd.to_datetime(df[col_datetime])
     return s
-
 
 # full index(균일 시간 인덱스) 생성하여 결측 시점 포함 재인덱싱
 def _ensure_full_index(
@@ -184,7 +178,6 @@ def _ensure_full_index(
 
     return re
 
-
 # 지정 시간 한도 이내에서만 ffill 적용
 def _limited_ffill(
     df: pd.DataFrame,
@@ -225,7 +218,6 @@ def _limited_ffill(
     else:
         out2 = out.ffill(limit=max_rows)
     return out2.reset_index()
-
 
 # 앞뒤 유효 관측 시각 차가 limit_sec 이내인 결측점만 선형 보간
 def _time_limited_interpolate(
@@ -270,12 +262,9 @@ def _time_limited_interpolate(
     if out[col_datetime].duplicated().any():
         warnings.warn(
             "[TRAIN-COMMON] _time_limited_interpolate: 동일 timestamp 감지 → "
-            "drop_duplicates(keep='first') 수행",
-            RuntimeWarning,
+            "drop_duplicates(keep='first') 수행", RuntimeWarning
         )
-        out = out.drop_duplicates(subset=[col_datetime], keep="first").reset_index(
-            drop=True
-        )
+        out = out.drop_duplicates(subset=[col_datetime], keep="first").reset_index(drop=True)
         ts = out[col_datetime]  # 갱신
 
     for col in target_cols:
@@ -289,13 +278,11 @@ def _time_limited_interpolate(
         s_time_indexed = pd.Series(s.values, index=ts)
         try:
             s_interp = s_time_indexed.interpolate(method=method, limit_area="inside")
-        except (
-            Exception
-        ):  # (수정) ->  동일 timestamp 문제라는 에러로그 띄우고 drop_duplicates 해서 첫행만 남기는걸로
+        except Exception: # (수정) ->  동일 timestamp 문제라는 에러로그 띄우고 drop_duplicates 해서 첫행만 남기는걸로
             # (보강) method='time' 실패 시 linear 재시도 (중복 제거 이후에도 예외 시)
             warnings.warn(
                 f"[TRAIN-COMMON] interpolate(method='{method}') 실패 → 'linear'로 재시도: col={col}",
-                RuntimeWarning,
+                RuntimeWarning
             )
             # time 보간이 불가한 경우(예: 동일 timestamp 문제) linear로 fallback
             s_interp = s_time_indexed.interpolate(method="linear", limit_area="inside")
@@ -322,7 +309,6 @@ def _time_limited_interpolate(
 
     return out
 
-
 # ============================================================
 # EQ_Status 유틸
 # ============================================================
@@ -336,7 +322,6 @@ def _estimate_step_seconds(ts: pd.Series) -> float:
         return float(step) if step and step > 0 else 1.0
     except Exception:
         return 1.0
-
 
 # ============================================================
 # EQ_Status: 드롭 없이 NaN 마스킹 + 플래그 세팅
@@ -383,7 +368,7 @@ def _apply_eq_status_mask(
     # 사전 준비: 플래그 컬럼 보장
     # ---------------------------------
     out = df.copy()
-
+    
     col_flag = cc.col_eq_status_filtered
     if col_flag not in out.columns:
         out[col_flag] = False
@@ -391,7 +376,7 @@ def _apply_eq_status_mask(
     n = len(out)
 
     logger.info("┌─[EQ] 1. EQ_Status 기반 row filtering 시작")
-
+    
     # ---------------------------------
     # 0) 필수 컬럼 유효성 체크
     # ---------------------------------
@@ -399,22 +384,16 @@ def _apply_eq_status_mask(
     cols_tms_value = list(cc.cols_tms_value)
     cols_icf_tms = list(cc.cols_icf_tms)
 
-    missing = [
-        c
-        for c in (cols_tms_eq_status + cols_tms_value + cols_icf_tms)
-        if c not in out.columns
-    ]
+    missing = [c for c in (cols_tms_eq_status + cols_tms_value + cols_icf_tms) if c not in out.columns]
     if missing:
         raise KeyError(f"[EQ] 필수 컬럼 누락: {missing}")
 
     # 센서 → 타깃 컬럼 매핑 (각 EQ 상태 컬럼마다 값/ICF 컬럼)
     sensor_cols: Dict[str, List[str]] = {
         eq_col: [val_col, icf_col]
-        for eq_col, val_col, icf_col in zip(
-            cols_tms_eq_status, cols_tms_value, cols_icf_tms
-        )
+        for eq_col, val_col, icf_col in zip(cols_tms_eq_status, cols_tms_value, cols_icf_tms)
     }
-    window_rows_eq_status_shift = int(shift_sec / resample_sec)
+    window_rows_eq_status_shift       = int(shift_sec         / resample_sec)
     window_rows_eq_status_min_nan_len = int(min_nan_block_sec / resample_sec)
 
     # ---------------------------------
@@ -435,7 +414,7 @@ def _apply_eq_status_mask(
         status = out[col]
         cond_nan = status.isna()
         cond_non_zero = status.notna() & (status != 0)
-        cond_1 = status == 1
+        cond_1 = (status == 1)
 
         # 보고용 로그
         logger.info(
@@ -452,7 +431,7 @@ def _apply_eq_status_mask(
         if window_rows_eq_status_shift > 0 and pos_1.size > 0:
             ends = np.minimum(pos_1 + window_rows_eq_status_shift, n - 1)
             for s, e in zip(pos_1, ends):
-                post_mask[s : e + 1] = True
+                post_mask[s:e + 1] = True
 
         full_mask = cond_nan.to_numpy() | cond_non_zero.to_numpy() | post_mask
         logger.info("│  │   이후 shift 포함 총 마스킹 수: %d", int(full_mask.sum()))
@@ -469,10 +448,7 @@ def _apply_eq_status_mask(
     # ---------------------------------
     # B) 연속 NaN ≥ 임계길이: 플래그만 True (값 변경 없음)
     # ---------------------------------
-    logger.info(
-        "│  ├─[B] 연속 NaN ≥ %d행 플래그 처리 시작",
-        int(window_rows_eq_status_min_nan_len),
-    )
+    logger.info("│  ├─[B] 연속 NaN ≥ %d행 플래그 처리 시작", int(window_rows_eq_status_min_nan_len))
     all_sensor_cols = sum(sensor_cols.values(), [])
     missing_targets_all = [t for t in all_sensor_cols if t not in out.columns]
     if missing_targets_all:
@@ -480,7 +456,7 @@ def _apply_eq_status_mask(
 
     nan_all_mask = out[all_sensor_cols].isna().all(axis=1)
     group = (nan_all_mask != nan_all_mask.shift()).cumsum()
-    run_sizes = nan_all_mask.groupby(group).transform("size")
+    run_sizes = nan_all_mask.groupby(group).transform('size')
     long_nan = nan_all_mask & (run_sizes >= int(window_rows_eq_status_min_nan_len))
 
     # 값 변경 없이 플래그만
@@ -507,21 +483,16 @@ def _apply_eq_status_mask(
     # ---------------------------------
     # 최종 요약
     # ---------------------------------
-    idx_eq_status_filtered_total = idx_eq_status_filtered_nan.union(
-        idx_eq_status_filtered_not_0
-    )
+    idx_eq_status_filtered_total = idx_eq_status_filtered_nan.union(idx_eq_status_filtered_not_0)
 
     logger.info("├─[EQ] 요약")
     logger.info("│  (참고) shift 행수: %d", int(window_rows_eq_status_shift))
-    logger.info(
-        "│  (참고) 연속 NaN 임계 행수: %d", int(window_rows_eq_status_min_nan_len)
-    )
+    logger.info("│  (참고) 연속 NaN 임계 행수: %d", int(window_rows_eq_status_min_nan_len))
     logger.info("│  (1) 연속 NaN: %d", len(idx_eq_status_filtered_nan))
     logger.info("│  (2) EQ!=0 : %d", len(idx_eq_status_filtered_not_0))
     logger.info("│  (1)+(2)  : %d", len(idx_eq_status_filtered_total))
     logger.info("└─[EQ] 완료")
     return out
-
 
 # ============================================================
 # INCINERATOR_STATUS: ±window 플래그만 세팅 (nan으로 값 변경 없음)
@@ -567,7 +538,7 @@ def _apply_inc_status_mask(
         raise KeyError(f"[INC] 시간 컬럼 누락: {col_datetime}")
 
     # 상태 마스크
-    mask_bad = out[col_inc_status] == abnormal_value
+    mask_bad = (out[col_inc_status] == abnormal_value)
     if not mask_bad.any():
         logger.info("[INC] abnormal=%s 행 없음 → 스킵", abnormal_value)
         return out
@@ -578,14 +549,8 @@ def _apply_inc_status_mask(
     window_rows = int(round((window_min * 60) / resample_sec))
     window_rows = max(0, window_rows)
 
-    logger.info(
-        "[INC] abnormal=%s, window_min=%d, resample_sec=%d → ±%d행(총 %d행 커널)",
-        abnormal_value,
-        int(window_min),
-        int(resample_sec),
-        window_rows,
-        2 * window_rows + 1,
-    )
+    logger.info("[INC] abnormal=%s, window_min=%d, resample_sec=%d → ±%d행(총 %d행 커널)",
+                abnormal_value, int(window_min), int(resample_sec), window_rows, 2 * window_rows + 1)
 
     # ----- 행 기준 팽창 마스크 (convolution) -----
     v = mask_bad.to_numpy(dtype=int)
@@ -593,20 +558,15 @@ def _apply_inc_status_mask(
         window_mask = v.astype(bool)
     else:
         kernel = np.ones(2 * window_rows + 1, dtype=int)
-        window_mask = np.convolve(v, kernel, mode="same") > 0
+        window_mask = np.convolve(v, kernel, mode='same') > 0
 
     # ----- 값 변경 없이 플래그만 세팅 -----
     prev_true = out[col_flag].sum()
     out.loc[window_mask, col_flag] = True
     flagged = int(out[col_flag].sum() - prev_true)
 
-    logger.info(
-        "[INC] 플래그 세팅 행수=%d (팽창 마스크 총합=%d)",
-        flagged,
-        int(window_mask.sum()),
-    )
+    logger.info("[INC] 플래그 세팅 행수=%d (팽창 마스크 총합=%d)", flagged, int(window_mask.sum()))
     return out
-
 
 # ============================================================
 # 글로벌 임계값: 플래그만 세팅 (nan으로 값 변경 없음)
@@ -633,11 +593,7 @@ def _apply_global_threshold_mask(
         out[col_flag] = False
 
     # 유효 numeric 컬럼만 사용
-    valid_cols = [
-        c
-        for c in numeric_cols
-        if c in out.columns and pd.api.types.is_numeric_dtype(out[c])
-    ]
+    valid_cols = [c for c in numeric_cols if c in out.columns and pd.api.types.is_numeric_dtype(out[c])]
     if not valid_cols:
         return out
 
@@ -653,6 +609,8 @@ def _apply_global_threshold_mask(
     out.loc[flag_mask, col_flag] = True
     return out
 
+    
+    
 
 # ============================================================
 # Public API
@@ -670,21 +628,15 @@ class Preprocessor:
         - 학습용 데이터셋 생성:
           시간필터 → 비정상제외 → 이상치→NaN → 시간제약보간
     """
-
     # 공통 스키마/룰
     column_config: ColumnConfig = field(default_factory=ColumnConfig)
 
     # 전처리 설정(학습/추론)
     model_config: GPModelConfig = field(default_factory=GPModelConfig)
-    prep_cm_train_cfg: TrainPreprocessingConfig = field(
-        default_factory=TrainPreprocessingConfig
-    )
-    prep_gp_train_cfg: GPTrainPreprocessingConfig = field(
-        default_factory=GPTrainPreprocessingConfig
-    )
-    prep_infer_cfg: InferPreprocessingConfig = field(
-        default_factory=InferPreprocessingConfig
-    )
+    prep_cm_train_cfg: TrainPreprocessingConfig = field(default_factory=TrainPreprocessingConfig)
+    prep_gp_train_cfg: GPTrainPreprocessingConfig = field(default_factory=GPTrainPreprocessingConfig)
+    prep_infer_cfg: InferPreprocessingConfig = field(default_factory=InferPreprocessingConfig)
+
 
     # -----------------------------
     # [TRAIN] 학습 데이터 생성 (공통 전처리)
@@ -724,7 +676,7 @@ class Preprocessor:
         3) 임계값 기반 이상치 처리: out-of-range → NaN
         4) 시간 제약 보간: 앞/뒤 유효 관측이 limit_sec 이내인 경우만 보간
         5) 시간 reindexing으로 생긴 rows 제외(col_real_row == True만 유지)
-
+        
         Parameters
         ----------
         df : pd.DataFrame
@@ -741,12 +693,7 @@ class Preprocessor:
         tc = self.prep_cm_train_cfg
         cc = self.column_config
         mc = self.model_config
-        lg = get_logger(
-            logger_cfg
-            or getattr(
-                tc, "logger_cfg", LoggerConfig(name="Preprocess.TRAIN", level=10)
-            )
-        )
+        lg = get_logger(logger_cfg or getattr(tc, "logger_cfg", LoggerConfig(name="Preprocess.TRAIN", level=10)))
 
         col_datetime = cc.col_datetime
         col_real_row = cc.col_real_row
@@ -765,26 +712,21 @@ class Preprocessor:
         out = _ensure_full_index(out, col_datetime, freq=f, col_real_row=col_real_row)
         after_n = len(out)
         added_n = after_n - before_n
-        lg.info(
-            "[TRAIN-COMMON][FULL-INDEX] 행수: %s → %s (추가 %s)",
-            f"{before_n:,}",
-            f"{after_n:,}",
-            f"{added_n:,}",
-        )
+        lg.info("[TRAIN-COMMON][FULL-INDEX] 행수: %s → %s (추가 %s)", f"{before_n:,}", f"{after_n:,}", f"{added_n:,}")
 
         # 1) EQ_Status 기반 row filtering (col_real_row와 무관)
         out = _apply_eq_status_mask(
             df=out,
             col_datetime=col_datetime,
-            sensor_cols=cc.eq_map,  # ← eq_map 사용
+            sensor_cols=cc.eq_map,                    # ← eq_map 사용
             resample_sec=int(tc.resample_sec),
-            shift_sec=int(tc.eq_shift_sec),  # ← eq_shift_sec 사용
+            shift_sec=int(tc.eq_shift_sec),           # ← eq_shift_sec 사용
             min_nan_block_sec=int(tc.eq_min_nan_block_sec),  # ← eq_min_nan_block_sec
             logger=lg,
             cc=cc,
             col_flag=cc.col_eq_status_filtered,
         )
-
+        
         # 2) 소각로 비정상 가동 구간 제외 (col_real_row와 무관)
         col_inc_status = cc.col_inc_status
         before = len(out)
@@ -798,18 +740,9 @@ class Preprocessor:
             logger=lg,
             col_flag=cc.col_inc_status_filtered,
         )
-        lg.info(
-            "[TRAIN-COMMON] 비정상 상태: %s == %s",
-            col_inc_status,
-            tc.exclude_status_value,
-        )
-        lg.info(
-            "[TRAIN-COMMON] 비정상 범위: 비정상 상태 rows + 앞뒤 %d분",
-            tc.exclude_window_min,
-        )
-        lg.info(
-            "[TRAIN-COMMON] 비정상 범위 제외: %s → %s", f"{before:,}", f"{len(out):,}"
-        )
+        lg.info("[TRAIN-COMMON] 비정상 상태: %s == %s", col_inc_status, tc.exclude_status_value)
+        lg.info("[TRAIN-COMMON] 비정상 범위: 비정상 상태 rows + 앞뒤 %d분", tc.exclude_window_min)
+        lg.info("[TRAIN-COMMON] 비정상 범위 제외: %s → %s", f"{before:,}", f"{len(out):,}")
         if out.empty:
             lg.error("[TRAIN-COMMON] 비정상 제외 후 데이터가 비었습니다.")
             return out
@@ -821,7 +754,7 @@ class Preprocessor:
             numeric_cols=tc._numeric_var_keys,
             col_flag=cc.col_glob_threshold_filtered,
         )
-
+    
         lg.info("[TRAIN-COMMON] 임계값 기반 이상치 마스킹 완료")
 
         # 4) 시간 제약 보간
@@ -832,74 +765,56 @@ class Preprocessor:
             limit_sec=int(tc.interpolate_limit_sec),
             method=str(tc.interpolate_method),
         )
-        lg.info(
-            "[TRAIN-COMMON] 시간 제약 보간 완료: method='%s', limit_sec=%s",
-            tc.interpolate_method,
-            tc.interpolate_limit_sec,
-        )
+        lg.info("[TRAIN-COMMON] 시간 제약 보간 완료: method='%s', limit_sec=%s",
+                tc.interpolate_method, tc.interpolate_limit_sec)
 
         # === [FLAGS FILTER] 보간 후: 플래그 3종의 합집합(True가 하나라도 있으면 제외)만들어 필터 ===
-        flag_cols = [
-            cc.col_eq_status_filtered,
-            cc.col_inc_status_filtered,
-            cc.col_glob_threshold_filtered,
-        ]
-
+        flag_cols = [cc.col_eq_status_filtered, cc.col_inc_status_filtered, cc.col_glob_threshold_filtered]
+        
         # 필수 플래그 컬럼 존재 검증 (없으면 즉시 에러)
         missing_flags = [c for c in flag_cols if c not in out.columns]
         if missing_flags:
             raise KeyError(f"[TRAIN-COMMON][FLAGS] 플래그 컬럼 누락: {missing_flags}")
-
+        
         # 안전: bool 변환 및 결측 False 처리
         flags_df = out[flag_cols].astype(bool).fillna(False)
-
+        
         # 로그를 위해 필터 전 집계
         before_flags = len(out)
         flag_counts = {c: int(flags_df[c].sum()) for c in flag_cols}
         any_flag_true = flags_df.any(axis=1)
         n_any_true = int(any_flag_true.sum())
-
+        
         # all False (== 어떤 필터에도 걸리지 않음) 행만 유지
         keep_mask = ~any_flag_true
         out = out.loc[keep_mask].copy()
         after_flags = len(out)
-
+        
         lg.info(
             "[TRAIN-COMMON][FLAGS] 합집합 제외 적용: %s → %s (제거 %s)",
-            f"{before_flags:,}",
-            f"{after_flags:,}",
-            f"{(before_flags - after_flags):,}",
+            f"{before_flags:,}", f"{after_flags:,}", f"{(before_flags - after_flags):,}"
         )
         lg.info(
             "[TRAIN-COMMON][FLAGS] 상세: any(True)=%s, %s=%d, %s=%d, %s=%d",
             f"{n_any_true:,}",
-            cc.col_eq_status_filtered,
-            flag_counts[cc.col_eq_status_filtered],
-            cc.col_inc_status_filtered,
-            flag_counts[cc.col_inc_status_filtered],
-            cc.col_glob_threshold_filtered,
-            flag_counts[cc.col_glob_threshold_filtered],
+            cc.col_eq_status_filtered, flag_counts[cc.col_eq_status_filtered],
+            cc.col_inc_status_filtered, flag_counts[cc.col_inc_status_filtered],
+            cc.col_glob_threshold_filtered, flag_counts[cc.col_glob_threshold_filtered],
         )
 
         # 5) 시간 reindexing으로 생긴 rows 제외 (real row만 유지)
         before_real_filter = len(out)
         if col_real_row not in out.columns:
-            raise ValueError(
-                f"[TRAIN-COMMON] '{col_real_row}' 컬럼이 없습니다. full index 생성 단계를 확인하세요."
-            )
+            raise ValueError(f"[TRAIN-COMMON] '{col_real_row}' 컬럼이 없습니다. full index 생성 단계를 확인하세요.")
         out = out.loc[out[col_real_row].astype(bool)].copy()
         after_real_filter = len(out)
         removed_fake = before_real_filter - after_real_filter
-        lg.info(
-            "[TRAIN-COMMON][REAL-ONLY] 삽입행 제거: %s → %s (제거 %s)",
-            f"{before_real_filter:,}",
-            f"{after_real_filter:,}",
-            f"{removed_fake:,}",
-        )
-
+        lg.info("[TRAIN-COMMON][REAL-ONLY] 삽입행 제거: %s → %s (제거 %s)",
+                f"{before_real_filter:,}", f"{after_real_filter:,}", f"{removed_fake:,}")
+    
         lg.info("[TRAIN-COMMON] 공통 전처리 완료 (최종 행수: %s)", f"{len(out):,}")
         return out
-
+        
     # -----------------------------
     # [TEST] 추천값 계산용 ffill
     # -----------------------------
@@ -944,10 +859,7 @@ class Preprocessor:
         tc = self.prep_infer_cfg
         cc = self.column_config
         # 로거 우선순위: 인자 logger_cfg > cfg.logger_cfg > 기본값
-        lg = get_logger(
-            logger_cfg
-            or getattr(ic, "logger_cfg", LoggerConfig(name="Preprocess.TEST", level=10))
-        )
+        lg = get_logger(logger_cfg or getattr(ic, "logger_cfg", LoggerConfig(name="Preprocess.TEST", level=10)))
 
         col_datetime = cc.col_datetime
         col_real_row = cc.col_real_row
@@ -965,9 +877,7 @@ class Preprocessor:
         f = _freq_from_seconds(tc.resample_sec)
         if require_full_index:
             lg.info(f"[TEST] full index 생성: freq='{f}'")
-            out = _ensure_full_index(
-                out, col_datetime, freq=f, col_real_row=col_real_row
-            )
+            out = _ensure_full_index(out, col_datetime, freq=f, col_real_row=col_real_row)
             lg.debug(f"[TEST] full index 후 행수: {len(out):,}")
 
         # 3) 제한 ffill
@@ -976,7 +886,10 @@ class Preprocessor:
 
         lg.info("[TEST] ffill 완료")
         return out
-
+        
+        
+    
+    
     # # -----------------------------------------
     # # 학습 전용: 데이터 추가 전처리리
     # # -----------------------------------------
@@ -984,14 +897,14 @@ class Preprocessor:
     # class GPTrainPreprocessor:
     #     # 공통 스키마/룰
     #     column_config: ColumnConfig = field(default_factory=ColumnConfig)
-
+    
     #     # 전처리 설정(학습/추론)
     #     model_config: GPModelConfig = field(default_factory=GPModelConfig)
     #     prep_cm_train_cfg: TrainPreprocessingConfig = field(default_factory=TrainPreprocessingConfig)
     #     prep_gp_train_cfg: GPTrainPreprocessingConfig = field(default_factory=GPTrainPreprocessingConfig)
     # -----------------------------
     # [TRAIN] GP 전용 추가 전처리: AI운전여부 필터링 → 중복행 제거 → 샘플링 → 결측치 제거 → 최소 유효샘플 개수 체크
-    # -----------------------------
+    # ----------------------------- 
     def make_train_gp(
         self,
         df: pd.DataFrame,
@@ -1012,8 +925,7 @@ class Preprocessor:
         cc = self.column_config
         mc = self.model_config
         lg = get_logger(
-            logger_cfg
-            or getattr(gc, "logger_cfg", LoggerConfig(name="Preprocess.GP", level=10))
+            logger_cfg or getattr(gc, "logger_cfg", LoggerConfig(name="Preprocess.GP", level=10))
         )
         col_datetime = cc.col_datetime
 
@@ -1038,17 +950,10 @@ class Preprocessor:
         #    - 미존재 시, 명시적 에러로 중단(설정/스키마 보완 유도)
         # ------------------------------------------------------------------
         if not hasattr(cc, "col_ai") or cc.col_ai not in out.columns:
-            raise ValueError(
-                "[TRAIN-GP] ColumnConfig.col_ai 누락 또는 입력 데이터에 없음."
-            )
+            raise ValueError("[TRAIN-GP] ColumnConfig.col_ai 누락 또는 입력 데이터에 없음.")
         before_ai = len(out)
         out = out.loc[out[cc.col_ai] == 1].copy()
-        lg.info(
-            "[TRAIN-GP] AI 운전 필터 적용: %d → %d (조건: %s == 1)",
-            before_ai,
-            len(out),
-            cc.col_ai,
-        )
+        lg.info("[TRAIN-GP] AI 운전 필터 적용: %d → %d (조건: %s == 1)", before_ai, len(out), cc.col_ai)
         if out.empty:
             raise ValueError("[TRAIN-GP] AI 운전(=1) 구간 없음.")
 
@@ -1070,39 +975,31 @@ class Preprocessor:
         if gc.dedup and req_cols:
             before = len(out)
             out = out.drop_duplicates(subset=req_cols, keep="first")
-            lg.info(
-                f"[TRAIN-GP] 중복 제거(subset={req_cols}): {before:,} → {len(out):,} 행"
-            )
+            lg.info(f"[TRAIN-GP] 중복 제거(subset={req_cols}): {before:,} → {len(out):,} 행")
 
         # 3) 샘플링: sample
         if gc.sample_size is not None and len(out) > int(gc.sample_size):
             before = len(out)
             rs = int(getattr(gc, "random_state", 42))
-            out = (
-                out.sample(n=int(gc.sample_size), random_state=rs)
-                .sort_values(col_datetime)
-                .reset_index(drop=True)
-            )
-            lg.info(
-                f"[TRAIN-GP] 샘플링: {before:,} → {len(out):,} (n={gc.sample_size}, rs={gc.random_state})"
-            )
+            out = out.sample(n=int(gc.sample_size), random_state=rs).sort_values(col_datetime).reset_index(drop=True)
+            lg.info(f"[TRAIN-GP] 샘플링: {before:,} → {len(out):,} (n={gc.sample_size}, rs={gc.random_state})")
 
         # 4) 결측치 제거: dropna
         if gc.dropna_required and req_cols:
             before = len(out)
             out = out.dropna(subset=req_cols)
-            lg.info(
-                f"[TRAIN-GP] 결측 행 제거(subset={req_cols}): {before:,} → {len(out):,} 행"
-            )
+            lg.info(f"[TRAIN-GP] 결측 행 제거(subset={req_cols}): {before:,} → {len(out):,} 행")
 
-        # 5) 최소 샘플 확보 확인: min_samples
-        if len(out) < int(gc.min_samples):
-            lg.warning(f"[TRAIN-GP] min_samples 미만: {len(out)} < {gc.min_samples}.")
+        # 250910 gc.min_samples -> gc.sample_size : 샘플 개수 8개 미만일 때 경고 -> 1000개 미만일 때로 변경
+        # 5) 최소 샘플 확보 확인: sample_size
+        if len(out) < int(gc.sample_size):
+            lg.warning(f"[TRAIN-GP] 데이터 샘플링 개수 부족: {len(out)} < {gc.sample_size}.")
             lg.warning(f"학습에 부적합할 수 있습니다.")
         lg.info("[TRAIN-GP] GP 전용 전처리 완료")
         return out
-
-
+        
+        
+        
 """
 LightGBM 추가
 
@@ -1115,14 +1012,9 @@ LightGBM 추가
 """
 
 # === Local application ===
-from config.preprocessing_config import (
-    _LGBMWindowsMixin,
-    LGBMTrainPreprocessingConfig,
-    LGBMInferPreprocessingConfig,
-)
+from config.preprocessing_config import _LGBMWindowsMixin, LGBMTrainPreprocessingConfig, LGBMInferPreprocessingConfig
 
 # === Helper 함수 ===
-
 
 def generate_interval_summary_features_time(
     df: pd.DataFrame,
@@ -1145,11 +1037,7 @@ def generate_interval_summary_features_time(
     new_columns: list[str] = []
 
     for col in columns:
-        s_raw = (
-            pd.to_numeric(df_work[col], errors="coerce")
-            if coerce_numeric
-            else df_work[col]
-        )
+        s_raw = pd.to_numeric(df_work[col], errors="coerce") if coerce_numeric else df_work[col]
         s_val = pd.Series(s_raw.to_numpy(), index=t)
 
         rate_per_sec = s_val.diff() / dt_sec
@@ -1157,27 +1045,15 @@ def generate_interval_summary_features_time(
         out_chunks: list[pd.DataFrame] = []
 
         # (1) mean/std
-        for sec in windows_summary_sec or []:
+        for sec in (windows_summary_sec or []):
             win = f"{sec}s"
-            s_mean = (
-                s_val.rolling(
-                    win, closed=rolling_closed, min_periods=rolling_min_periods
-                )
-                .mean()
-                .reindex(t)
-            )
-            s_std = (
-                s_val.rolling(
-                    win, closed=rolling_closed, min_periods=rolling_min_periods
-                )
-                .std()
-                .reindex(t)
-            )
+            s_mean = s_val.rolling(win, closed=rolling_closed, min_periods=rolling_min_periods).mean().reindex(t)
+            s_std  = s_val.rolling(win, closed=rolling_closed, min_periods=rolling_min_periods).std().reindex(t)
 
             feat = pd.DataFrame(
                 {
                     f"{col}_mean_{sec}s": s_mean.values,
-                    f"{col}_std_{sec}s": s_std.values,
+                    f"{col}_std_{sec}s":  s_std.values,
                 },
                 index=df_work.index,
             )
@@ -1185,26 +1061,14 @@ def generate_interval_summary_features_time(
             new_columns += list(feat.columns)
 
         # (2) momentum max/min
-        for sec in windows_rate_sec or []:
+        for sec in (windows_rate_sec or []):
             win = f"{sec}s"
-            mom_up = (
-                rate_per_sec.rolling(
-                    win, closed=rolling_closed, min_periods=rolling_min_periods
-                )
-                .max()
-                .reindex(t)
-            )
-            mom_dn = (
-                rate_per_sec.rolling(
-                    win, closed=rolling_closed, min_periods=rolling_min_periods
-                )
-                .min()
-                .reindex(t)
-            )
+            mom_up = rate_per_sec.rolling(win, closed=rolling_closed, min_periods=rolling_min_periods).max().reindex(t)
+            mom_dn = rate_per_sec.rolling(win, closed=rolling_closed, min_periods=rolling_min_periods).min().reindex(t)
 
             feat = pd.DataFrame(
                 {
-                    f"{col}_momentum_max_up_{sec}s": mom_up.values,
+                    f"{col}_momentum_max_up_{sec}s":   mom_up.values,
                     f"{col}_momentum_max_down_{sec}s": mom_dn.values,
                 },
                 index=df_work.index,
@@ -1217,7 +1081,6 @@ def generate_interval_summary_features_time(
             df_work.loc[:, feat_df.columns] = feat_df
 
     return (df_work, new_columns) if return_df else new_columns
-
 
 def create_spike_weighted_target(
     df: pd.DataFrame,
@@ -1248,13 +1111,7 @@ def create_spike_weighted_target(
     """
 
     # 기존 보조 열 정리 (존재하면 삭제)
-    for col in (
-        target_col,
-        weight_col,
-        is_spike_col,
-        flag_interval_hit_col,
-        has_target_col,
-    ):
+    for col in (target_col, weight_col, is_spike_col, flag_interval_hit_col, has_target_col):
         if col in df.columns:
             del df[col]
 
@@ -1279,32 +1136,24 @@ def create_spike_weighted_target(
 
     # 각 >high_thr 블록마다 스파이크 가중 구간 생성
     if not high_times.empty:
-        grouped = pd.Series(high_times.values, index=high_times.values).groupby(
-            gid.values
-        )
+        grouped = pd.Series(high_times.values, index=high_times.values).groupby(gid.values)
         for _, grp in grouped:
             t_high_first = pd.to_datetime(grp.iloc[0])  # >high_thr 진입 시각
             win_start = t_high_first - lookback
-            win_end = t_high_first
+            win_end   = t_high_first
 
             win_mask = (t >= win_start) & (t < win_end) & low_mask
             if not win_mask.any():
                 continue
 
             t_low_first = t[win_mask].iloc[0]
-            low_val = (
-                float(s_nox.loc[t == t_low_first].iloc[0])
-                if (t == t_low_first).any()
-                else np.nan
-            )
+            low_val = float(s_nox.loc[t == t_low_first].iloc[0]) if (t == t_low_first).any() else np.nan
 
-            intervals.append(
-                {
-                    "t_low_first": t_low_first,
-                    "t_high_first": t_high_first,
-                    "low_value_at_first": low_val,
-                }
-            )
+            intervals.append({
+                "t_low_first": t_low_first,
+                "t_high_first": t_high_first,
+                "low_value_at_first": low_val
+            })
 
     # 3) 가중치/스파이크 부여 (타겟 정렬에 맞춰 구간 시프트)
     df[weight_col] = default_weight
@@ -1317,22 +1166,15 @@ def create_spike_weighted_target(
     # intervals_df 구성(시프트 전/후, 길이, 히트 카운트 포함)
     intervals_df = pd.DataFrame(intervals)
     if not intervals_df.empty:
-        intervals_df["shifted_start"] = intervals_df["t_low_first"] - pd.Timedelta(
-            seconds=delta_sec
-        )
-        intervals_df["shifted_end"] = intervals_df["t_high_first"] - pd.Timedelta(
-            seconds=delta_sec
-        )
-        intervals_df["duration_sec"] = (
-            intervals_df["t_high_first"] - intervals_df["t_low_first"]
-        ).dt.total_seconds()
+        intervals_df["shifted_start"] = intervals_df["t_low_first"]  - pd.Timedelta(seconds=delta_sec)
+        intervals_df["shifted_end"]   = intervals_df["t_high_first"] - pd.Timedelta(seconds=delta_sec)
+        intervals_df["duration_sec"]  = (intervals_df["t_high_first"] - intervals_df["t_low_first"]).dt.total_seconds()
 
         # 전체 hit 마스크 계산과 동시에 intervals_df에 n_rows_hit 채우기
         hit_global = np.zeros(len(df), dtype=bool)
         n_rows_hit = []
         for _, row in intervals_df.iterrows():
-            lo_s = row["shifted_start"]
-            hi_s = row["shifted_end"]
+            lo_s = row["shifted_start"]; hi_s = row["shifted_end"]
             hit_i = (t >= lo_s) & (t <= hi_s)
             n_rows_hit.append(int(hit_i.sum()))
             hit_global |= hit_i
@@ -1351,18 +1193,10 @@ def create_spike_weighted_target(
         intervals_df = intervals_df.reset_index(drop=True)
         intervals_df.insert(0, "interval_id", np.arange(len(intervals_df)))
     else:
-        intervals_df = pd.DataFrame(
-            columns=[
-                "interval_id",
-                "t_low_first",
-                "t_high_first",
-                "shifted_start",
-                "shifted_end",
-                "duration_sec",
-                "n_rows_hit",
-                "low_value_at_first",
-            ]
-        )
+        intervals_df = pd.DataFrame(columns=[
+            "interval_id","t_low_first","t_high_first","shifted_start","shifted_end",
+            "duration_sec","n_rows_hit","low_value_at_first"
+        ])
 
     # is_spike 컬럼
     df[is_spike_col] = is_spike
@@ -1376,17 +1210,13 @@ def create_spike_weighted_target(
         print("⚖️ 가중치 분포:")
         for w, c in vc.items():
             print(f"     가중치 {w}: {c:,}개 ({c/len(df)*100:.1f}%)")
-        print(
-            f"🔎 {is_spike_col}=True: {int(df[is_spike_col].sum()):,}개 "
-            f"({df[is_spike_col].mean()*100:.1f}%)"
-        )
+        print(f"🔎 {is_spike_col}=True: {int(df[is_spike_col].sum()):,}개 "
+              f"({df[is_spike_col].mean()*100:.1f}%)")
         print(f"📦 intervals_df: {len(intervals_df)}개 구간")
 
     return df, intervals_df
-
-
+    
 # === 전처리용 Class ===
-
 
 # -----------------------------
 # 공통: 요약통계/모멘텀 생성
@@ -1408,9 +1238,7 @@ class LGBMFeaturePreprocessor:
         coerce_numeric: bool = True,
     ) -> Tuple[pd.DataFrame, List[str]]:
         if not columns:
-            columns = (
-                self.cfg.column_config.lgbm_feature_columns
-            )  # 비면 ColumnConfig에서 ValueError
+            columns = self.cfg.column_config.lgbm_feature_columns  # 비면 ColumnConfig에서 ValueError
 
         df2, new_cols = generate_interval_summary_features_time(
             df,
@@ -1469,36 +1297,30 @@ class LGBMTrainPreprocessor:
         self,
         df: pd.DataFrame,
         *,
-        stat_feature_cols: Sequence[str],  # 공통 전처리에서 반환된 new_cols
-        extra_feature_cols: Sequence[str] = (),  # 필요 시 추가 피처
+        stat_feature_cols: Sequence[str],          # 공통 전처리에서 반환된 new_cols
+        extra_feature_cols: Sequence[str] = (),    # 필요 시 추가 피처
         drop_missing: bool = True,
         debug_nan: bool = False,
         verbose: bool = True,
         apply_high_nox_weight: bool = True,
-        high_nox_basis: Literal["target", "current"] = "target",
+        high_nox_basis: Literal["target","current"] = "target"
     ) -> Tuple[pd.DataFrame, List[str], pd.Series]:
         cc = self.cfg.column_config
 
         # 1) feature 목록 구성
         base_features: List[str] = list(cc.lgbm_feature_columns)
-        feature_cols: List[str] = list(
-            dict.fromkeys([*base_features, *stat_feature_cols, *extra_feature_cols])
-        )
+        feature_cols: List[str] = list(dict.fromkeys([*base_features, *stat_feature_cols, *extra_feature_cols]))
 
         # 2) 타깃 NaN 제거
         before_target = df.shape[0]
         df = df.loc[df[cc.col_lgbm_tmp_target_shift].notna(), :].copy()
         after_target = df.shape[0]
         if verbose:
-            print(
-                f"🎯 타깃 존재 행만 사용: {before_target:,} → {after_target:,} (제거 {before_target - after_target:,})"
-            )
+            print(f"🎯 타깃 존재 행만 사용: {before_target:,} → {after_target:,} (제거 {before_target - after_target:,})")
 
         keep_cols = [
-            cc.col_datetime,
-            cc.col_lgbm_tmp_target_shift,
-            cc.col_lgbm_tmp_is_spike,
-            cc.col_lgbm_tmp_weight,
+            cc.col_datetime, cc.col_lgbm_tmp_target_shift,
+            cc.col_lgbm_tmp_is_spike, cc.col_lgbm_tmp_weight
         ] + feature_cols
 
         missing = [c for c in keep_cols if c not in df.columns]
@@ -1508,15 +1330,10 @@ class LGBMTrainPreprocessor:
         # 3) df_model 구성
         df_model = df[keep_cols].sort_values(by=cc.col_datetime).reset_index(drop=True)
         if verbose:
-            print(
-                f"✅ 기본 데이터 준비 완료 (행: {len(df_model):,}, 열: {len(df_model.columns)})"
-            )
+            print(f"✅ 기본 데이터 준비 완료 (행: {len(df_model):,}, 열: {len(df_model.columns)})")
 
         # 4) valid_idx 계산 및 (옵션) 드랍
-        valid_cols = feature_cols + [
-            cc.col_lgbm_tmp_target_shift,
-            cc.col_lgbm_tmp_weight,
-        ]
+        valid_cols = feature_cols + [cc.col_lgbm_tmp_target_shift, cc.col_lgbm_tmp_weight]
         valid_idx = df_model[valid_cols].notna().all(axis=1)
 
         # (2025-09-08) (To-Do) logger 추가하고 debug 모드에서만 출력하도록 변경
@@ -1553,26 +1370,17 @@ class LGBMTrainPreprocessor:
         # 5) ← 레거시 동일 위치: 드랍 이후, 고농도 추가 가중치 적용
         if apply_high_nox_weight:
             wcol = cc.col_lgbm_tmp_weight
-            basis_col = (
-                cc.col_lgbm_tmp_target_shift
-                if high_nox_basis == "target"
-                else cc.col_nox
-            )
-            lo, hi = (
-                self.cfg.weight_high_nox_bound_lower,
-                self.cfg.weight_high_nox_bound_upper,
-            )
+            basis_col = cc.col_lgbm_tmp_target_shift if high_nox_basis == "target" else cc.col_nox
+            lo, hi = self.cfg.weight_high_nox_bound_lower, self.cfg.weight_high_nox_bound_upper
 
             mask = (
-                (df_model[wcol] == self.cfg.weight_spike_neg)  # 기본 가중치(=1)인 곳만
-                & (df_model[basis_col] > lo)
-                & (df_model[basis_col] < hi)
+                (df_model[wcol] == self.cfg.weight_spike_neg) &  # 기본 가중치(=1)인 곳만
+                (df_model[basis_col] > lo) &
+                (df_model[basis_col] < hi)
             )
             if mask.any():
                 df_model.loc[mask, wcol] = self.cfg.weight_high_nox
                 if verbose:
-                    print(
-                        f"⚖️ 고농도 추가 가중치 적용(드랍 이후): {int(mask.sum()):,}행 → {self.cfg.weight_high_nox}"
-                    )
+                    print(f"⚖️ 고농도 추가 가중치 적용(드랍 이후): {int(mask.sum()):,}행 → {self.cfg.weight_high_nox}")
 
         return df_model, feature_cols, valid_idx

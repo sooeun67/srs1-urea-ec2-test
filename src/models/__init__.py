@@ -1,3 +1,3 @@
 from .gaussian_process import GaussianProcessNOxModel
-from .lgbm import LGBMNOxModel
-__all__ = ["GaussianProcessNOxModel", "LGBMNOxModel"]
+
+__all__ = ["GaussianProcessNOxModel"]

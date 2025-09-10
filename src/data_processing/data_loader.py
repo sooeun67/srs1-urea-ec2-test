@@ -16,25 +16,33 @@ import pandas as pd
 from pprint import pformat
 
 from config.column_config import ColumnConfig
-from config.preprocessing_config import GPTrainPreprocessingConfig, InferPreprocessingConfig
+from config.preprocessing_config import (
+    GPTrainPreprocessingConfig,
+    InferPreprocessingConfig,
+)
 from utils.logger import get_logger, LoggerConfig
-
 
 
 @dataclass
 class DataLoader:
     """데이터 로더 (학습/추론 공용) - 기존 메서드만 유지, 내부 로그 보강(한국어)"""
+
     column_config: Optional[ColumnConfig] = None
     preprocessing_config: Optional[GPTrainPreprocessingConfig] = None
 
     # 로거 인스턴스(설정은 preprocessing_config.logger_cfg에서 주입)
     logger: logging.Logger = field(init=False, repr=False)
 
-
     def __post_init__(self) -> None:
         self.cc = self.column_config or ColumnConfig()
-        self.preprocessing_config = self.preprocessing_config or GPTrainPreprocessingConfig()
-        logger_cfg = getattr(self.preprocessing_config, "logger_cfg", LoggerConfig(name="DataLoader", level=logging.INFO))
+        self.preprocessing_config = (
+            self.preprocessing_config or GPTrainPreprocessingConfig()
+        )
+        logger_cfg = getattr(
+            self.preprocessing_config,
+            "logger_cfg",
+            LoggerConfig(name="DataLoader", level=logging.INFO),
+        )
         self.logger = get_logger(logger_cfg)
 
         self.logger.debug("[INIT] DataLoader 생성 완료")
@@ -79,8 +87,16 @@ class DataLoader:
         self.logger.info("최종 크기=%s", df.shape)
         self.logger.info(
             "범위=[%s ~ %s]",
-            str(df[self.cc.col_datetime].min()) if self.cc.col_datetime in df.columns and len(df) else None,
-            str(df[self.cc.col_datetime].max()) if self.cc.col_datetime in df.columns and len(df) else None
+            (
+                str(df[self.cc.col_datetime].min())
+                if self.cc.col_datetime in df.columns and len(df)
+                else None
+            ),
+            (
+                str(df[self.cc.col_datetime].max())
+                if self.cc.col_datetime in df.columns and len(df)
+                else None
+            ),
         )
         return df.reset_index(drop=True)
 
@@ -125,7 +141,9 @@ class DataLoader:
         self.logger.debug("시간 파싱 종료")
 
         if self.cc.col_datetime not in df.columns:
-            msg = f"'{self.cc.col_datetime}' 컬럼이 없어 추론 시점을 선택할 수 없습니다."
+            msg = (
+                f"'{self.cc.col_datetime}' 컬럼이 없어 추론 시점을 선택할 수 없습니다."
+            )
             self.logger.error("%s", msg)
             raise ValueError(msg)
 
@@ -142,7 +160,9 @@ class DataLoader:
 
         start_ts = rt - pd.Timedelta(seconds=int(window_sec))
         before = len(df)
-        df = df.loc[(df[self.cc.col_datetime] >= start_ts) & (df[self.cc.col_datetime] <= rt)]
+        df = df.loc[
+            (df[self.cc.col_datetime] >= start_ts) & (df[self.cc.col_datetime] <= rt)
+        ]
         self.logger.info("윈도우 필터 [%s, %s]: %d → %d", start_ts, rt, before, len(df))
 
         if df.empty:
@@ -156,8 +176,16 @@ class DataLoader:
         self.logger.info("최종 크기=%s", df.shape)
         self.logger.info(
             "범위=[%s ~ %s]",
-            str(df[self.cc.col_datetime].min()) if self.cc.col_datetime in df.columns and len(df) else None,
-            str(df[self.cc.col_datetime].max()) if self.cc.col_datetime in df.columns and len(df) else None
+            (
+                str(df[self.cc.col_datetime].min())
+                if self.cc.col_datetime in df.columns and len(df)
+                else None
+            ),
+            (
+                str(df[self.cc.col_datetime].max())
+                if self.cc.col_datetime in df.columns and len(df)
+                else None
+            ),
         )
         return df
 
@@ -202,38 +230,27 @@ class DataLoader:
         self.logger.info("[END] 데이터 유효성 점검 종료 | 총 소요=%.3fs", pc() - t0)
         return info
 
-    def select_valid_rows_for_inference(self, df: pd.DataFrame, *, require_hz: bool = False) -> pd.Series:
-        """
-        추론 행 선택 (Boolean mask)
-        - require_hz=False: O2, Temp, NOx 필수
-        - require_hz=True : gp_feature_columns + target 모두 필수
-        """
-        self.logger.debug("require_hz=%s", require_hz)
-        if require_hz:
-            cols = self._inference_required()
-        else:
-            cols = [self.cc.col_o2, self.cc.col_temp, self.cc.col_nox]
-
-        exist = [c for c in cols if c in df.columns]
-        if not exist:
-            msg = f"필수 추론 컬럼이 없습니다. 기대 컬럼: {cols}"
-            self.logger.error("[INFER/SELECT] %s", msg)
-            raise ValueError(msg)
-
-        mask = df[exist].notna().all(axis=1)
-        self.logger.debug("사용 컬럼=%s | 유효마스크=%s", exist, mask.values.tolist())
-        return mask
-
     # -----------------------------
     # Internal helpers (원래 있던 것만 유지)
     # -----------------------------
     def _training_required(self) -> List[str]:
-        return list(dict.fromkeys(self.cc.gp_feature_columns + self.cc.lgbm_feature_columns + [self.cc.target_column]))
+        return list(
+            dict.fromkeys(
+                self.cc.gp_feature_columns
+                + self.cc.lgbm_feature_columns
+                + [self.cc.target_column]
+            )
+        )
 
     def _training_columns(self) -> List[str]:
         cols = [self.cc.col_datetime] + self._training_required()
         cols += [self.cc.col_ai, self.cc.col_act_status, self.cc.col_inc_status]
-        cols += self.cc.cols_temp + self.cc.cols_icf_tms + self.cc.cols_tms_value + self.cc.cols_tms_eq_status
+        cols += (
+            self.cc.cols_temp
+            + self.cc.cols_icf_tms
+            + self.cc.cols_tms_value
+            + self.cc.cols_tms_eq_status
+        )
         return list(dict.fromkeys(cols))
 
     def _inference_required(self) -> List[str]:
@@ -247,7 +264,9 @@ class DataLoader:
     def _load_any(self, path: str, columns: Optional[List[str]] = None) -> pd.DataFrame:
         t0 = pc()
         ext = os.path.splitext(path)[1].lower()
-        self.logger.debug("[LOAD] 시작 | path=%s | 확장자=%s | 요청컬럼=%s", path, ext, columns)
+        self.logger.debug(
+            "[LOAD] 시작 | path=%s | 확장자=%s | 요청컬럼=%s", path, ext, columns
+        )
 
         def _slice(df: pd.DataFrame) -> pd.DataFrame:
             if columns:
@@ -263,13 +282,17 @@ class DataLoader:
                 try:
                     df = pd.read_parquet(path, columns=columns)
                 except Exception as e:
-                    self.logger.debug("[LOAD] parquet 선택 로드 실패 → 전체 로드 후 슬라이스: %r", e)
+                    self.logger.debug(
+                        "[LOAD] parquet 선택 로드 실패 → 전체 로드 후 슬라이스: %r", e
+                    )
                     df = _slice(pd.read_parquet(path))
             elif ext in (".csv", ".txt"):
                 try:
                     df = pd.read_csv(path, usecols=columns)
                 except Exception as e:
-                    self.logger.debug("[LOAD] csv 선택 로드 실패 → 전체 로드 후 슬라이스: %r", e)
+                    self.logger.debug(
+                        "[LOAD] csv 선택 로드 실패 → 전체 로드 후 슬라이스: %r", e
+                    )
                     df = _slice(pd.read_csv(path))
             elif ext in (".feather", ".ft"):
                 df = _slice(pd.read_feather(path))
@@ -289,7 +312,9 @@ class DataLoader:
             df = df.copy()
             df[time_col] = pd.to_datetime(df[time_col], errors="coerce")
             after_na = int(pd.isna(df[time_col]).sum())
-            self.logger.debug("[TIME] '%s' 파싱 NA: %d → %d", time_col, before_na, after_na)
+            self.logger.debug(
+                "[TIME] '%s' 파싱 NA: %d → %d", time_col, before_na, after_na
+            )
         else:
             self.logger.info("[TIME] '%s' 컬럼 없음 → 시간 파싱 생략", time_col)
         self.logger.debug("[TIME] 종료")
@@ -312,11 +337,15 @@ class DataLoader:
         if start_time:
             before = len(d)
             d = d[d[time_col] >= pd.to_datetime(start_time)]
-            self.logger.debug("[TIME/FILTER] start_time>=%s : %d → %d", start_time, before, len(d))
+            self.logger.debug(
+                "[TIME/FILTER] start_time>=%s : %d → %d", start_time, before, len(d)
+            )
         if end_time:
             before = len(d)
             d = d[d[time_col] <= pd.to_datetime(end_time)]
-            self.logger.debug("[TIME/FILTER] end_time<=%s : %d → %d", end_time, before, len(d))
+            self.logger.debug(
+                "[TIME/FILTER] end_time<=%s : %d → %d", end_time, before, len(d)
+            )
         d = d.sort_values(time_col).reset_index(drop=True)
         self.logger.debug("[TIME/FILTER] 종료")
         return d

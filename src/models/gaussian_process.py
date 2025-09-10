@@ -32,6 +32,7 @@ class GaussianProcessNOxModel:
     - 컬럼 스키마: ColumnConfig
     - 모델/커널/학습/저장 파라미터: GPModelConfig
     """
+
     column_config: ColumnConfig = field(default_factory=ColumnConfig)
     model_config: GPModelConfig = field(default_factory=GPModelConfig)
 
@@ -53,16 +54,11 @@ class GaussianProcessNOxModel:
     # ----------------------
     def _create_kernel(self) -> ConstantKernel:
         mc = self.model_config
-        kernel = (
-            ConstantKernel(mc.constant_value, mc.constant_bounds)
-            * Matern(
-                length_scale=np.array(mc.matern_length_scale_init, dtype=float),
-                nu=mc.matern_nu
-              )
-            + WhiteKernel(
-                noise_level=mc.white_noise_level,
-                noise_level_bounds=mc.white_noise_bounds
-              )
+        kernel = ConstantKernel(mc.constant_value, mc.constant_bounds) * Matern(
+            length_scale=np.array(mc.matern_length_scale_init, dtype=float),
+            nu=mc.matern_nu,
+        ) + WhiteKernel(
+            noise_level=mc.white_noise_level, noise_level_bounds=mc.white_noise_bounds
         )
         self.logger.debug(f"커널 생성: {kernel}")
         return kernel
@@ -75,11 +71,12 @@ class GaussianProcessNOxModel:
         self.logger.info("GP Model 학습 시작")
         exec_file = os.path.basename(globals().get("__file__", "interactive"))
         self.logger.debug(f"실행 파일: {exec_file}")
-        fmt = (lambda a:
-               np.array2string(np.asarray(a), precision=6, separator=', ')
-               if np.size(a) <= 10 else
-               f"size={np.size(a)}, min={np.nanmin(a):.6g}, max={np.nanmax(a):.6g}, "
-               f"head={np.asarray(a)[:2]}, tail={np.asarray(a)[-2:]}")
+        fmt = lambda a: (
+            np.array2string(np.asarray(a), precision=6, separator=", ")
+            if np.size(a) <= 10
+            else f"size={np.size(a)}, min={np.nanmin(a):.6g}, max={np.nanmax(a):.6g}, "
+            f"head={np.asarray(a)[:2]}, tail={np.asarray(a)[-2:]}"
+        )
 
         cc, mc = self.column_config, self.model_config
 
@@ -87,12 +84,11 @@ class GaussianProcessNOxModel:
         # 배열 생성
         X = d[cc.gp_feature_columns].to_numpy(dtype=float)  # [Hz, O2, Temp(col_temp)]
         y = d[cc.target_column].to_numpy(dtype=float)
-        
+
         # ▼ 최종 학습데이터(피처+타깃) 보관
         req_cols = list(dict.fromkeys(cc.gp_feature_columns + [cc.target_column]))
         self._train_df_ = d[req_cols].copy()
         self.logger.debug(f"학습 데이터 스냅샷 저장: shape={self._train_df_.shape}")
-
 
         # 간단 통계 로그
         self.logger.debug(f"X.shape={X.shape}, y.shape={y.shape}")
@@ -144,16 +140,19 @@ class GaussianProcessNOxModel:
     # ----------------------
     # 예측
     # ----------------------
-    def predict(self, X: np.ndarray, return_std: bool = True) -> Tuple[np.ndarray, Optional[np.ndarray]]:
+    def predict(
+        self, X: np.ndarray, return_std: bool = True
+    ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
         """학습된 모델로 예측 수행."""
         self.logger.info("GP Model 예측 시작")
         exec_file = os.path.basename(globals().get("__file__", "interactive"))
         self.logger.debug(f"실행 파일: {exec_file}")
-        fmt = (lambda a:
-               np.array2string(np.asarray(a), precision=6, separator=', ')
-               if np.size(a) <= 10 else
-               f"size={np.size(a)}, min={np.nanmin(a):.6g}, max={np.nanmax(a):.6g}, "
-               f"head={np.asarray(a)[:2]}, tail={np.asarray(a)[-2:]}")
+        fmt = lambda a: (
+            np.array2string(np.asarray(a), precision=6, separator=", ")
+            if np.size(a) <= 10
+            else f"size={np.size(a)}, min={np.nanmin(a):.6g}, max={np.nanmax(a):.6g}, "
+            f"head={np.asarray(a)[:2]}, tail={np.asarray(a)[-2:]}"
+        )
 
         try:
             if self.model is None:
@@ -175,8 +174,10 @@ class GaussianProcessNOxModel:
                 n_samples = X.shape[0]
                 self.logger.warning("입력에 NaN 포함 → NaN 예측 반환")
                 self.logger.debug(f"입력 X(요약): {fmt(X)}")
-                return (np.full(n_samples, np.nan),
-                        np.full(n_samples, np.nan) if return_std else None)
+                return (
+                    np.full(n_samples, np.nan),
+                    np.full(n_samples, np.nan) if return_std else None,
+                )
 
             self.logger.debug(f"입력 X.shape={X.shape}, return_std={return_std}")
             self.logger.debug(f"입력 X(요약): {fmt(X)}")
@@ -194,7 +195,6 @@ class GaussianProcessNOxModel:
         except:
             self.logger.exception("predict() 중 에러 발생 -> NaN으로 예외 처리")
 
-
     # ----------------------
     # 저장
     # ----------------------
@@ -204,21 +204,21 @@ class GaussianProcessNOxModel:
         self.logger.info("GP Model 저장 시작")
         exec_file = os.path.basename(globals().get("__file__", "interactive"))
         self.logger.debug(f"실행 파일: {exec_file}")
-    
+
         if self.model is None:
             msg = "모델이 학습되지 않았습니다."
             self.logger.error(msg)
             raise ValueError(msg)
-    
+
         path = filepath or self.model_config.model_path
         dir_ = os.path.dirname(path)
         if dir_:
             os.makedirs(dir_, exist_ok=True)
-    
+
         # 1) 모델 저장
         joblib.dump(self.model, path)
         self.logger.info(f"모델 저장 완료: {path}")
-    
+
         # 2) 학습 데이터 CSV 저장 (가능한 경우)
         if self._train_df_ is None:
             self.logger.warning("학습 데이터 스냅샷이 없어 CSV 저장을 건너뜁니다.")
@@ -230,9 +230,8 @@ class GaussianProcessNOxModel:
                 f"학습 데이터 CSV 저장 완료: {csv_path} "
                 f"(rows={len(self._train_df_)}, cols={list(self._train_df_.columns)})"
             )
-    
-        return path
 
+        return path
 
     # ----------------------
     # 로드
