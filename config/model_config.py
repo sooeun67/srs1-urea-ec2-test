@@ -108,7 +108,7 @@ class GPModelConfig:
         return os.path.join(self.model_dir, self.model_filename)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=False)  # [0910] 수정 (frozen=True) 여야 함
 class LGBMModelConfig:
 
     # === 시간 범위 설정 ===

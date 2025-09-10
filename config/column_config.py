@@ -35,7 +35,7 @@ PLANT_CODE_PRESETS: Dict[str, Dict[str, Any]] = {
 }
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=False)  # [0910] 수정 (frozen=True) 여야 함
 class ColumnConfig:
     """
     데이터 컬럼 설정 (모델/추천/메타 컬럼 일원화)
