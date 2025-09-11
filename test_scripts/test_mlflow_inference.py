@@ -415,9 +415,16 @@ def query_recent_influx() -> pd.DataFrame:
     # 주 관심 컬럼만 미리보기: REQUIRED_COLUMNS + time
     preview_cols = [c for c in ["time", *REQUIRED_COLUMNS] if c in df.columns]
     try:
-        print(df[preview_cols].head(200) if preview_cols else df.head(200))
+        print("🔍 원본 InfluxDB 데이터 (처음 5개 행):")
+        print(df[preview_cols].head(5) if preview_cols else df.head(5))
+        print("🔍 원본 InfluxDB 데이터 통계:")
+        if preview_cols:
+            print(df[preview_cols].describe())
+        else:
+            print(df.describe())
     except Exception:
-        print(df.head(200))
+        print("🔍 원본 InfluxDB 데이터 (처리 실패):")
+        print(df.head(5))
     return df
 
 
@@ -573,6 +580,18 @@ def main() -> None:
         f"📊 GP 모델 정보: {model_info['status']}, 학습 샘플: {model_info.get('n_train', 'N/A')}"
     )
 
+    # GP 모델 상세 정보 출력
+    print("🔍 GP 모델 상세 정보:")
+    if hasattr(gp_model, "model") and gp_model.model is not None:
+        print(f"  - 모델 타입: {type(gp_model.model)}")
+        print(f"  - 커널: {gp_model.model.kernel_}")
+        print(f"  - 알파: {gp_model.model.alpha_}")
+        print(
+            f"  - 학습 데이터 수: {gp_model.model.X_train_.shape if hasattr(gp_model.model, 'X_train_') else 'N/A'}"
+        )
+    else:
+        print("  - 모델이 로드되지 않음!")
+
     # 3) LGBM 모델 로드 (디버깅 모드에서는 비활성화)
     lgbm_model_path = os.environ.get(
         "LGBM_MODEL_PATH", f"mlflow_artifacts/{run_id}/urea_gp_model/lgbm_model.txt"
@@ -613,7 +632,13 @@ def main() -> None:
     valid_times = agg.loc[valid_mask, "_time_gateway"].tolist()
     print("🧮 예측 입력 배열 형태:", X.shape)
     print(f"📋 피처 컬럼: {influx_feature_cols}")
-    print(X)
+    print("🔍 GP 모델 입력 데이터 (처음 5개 행):")
+    print(X[:5])
+    print("🔍 GP 모델 입력 데이터 통계:")
+    print(f"  - 평균: {X.mean(axis=0)}")
+    print(f"  - 표준편차: {X.std(axis=0)}")
+    print(f"  - 최솟값: {X.min(axis=0)}")
+    print(f"  - 최댓값: {X.max(axis=0)}")
 
     # 6) GP 모델 예측 및 Hz 추천: 각 5초 윈도우에 대해 NOx 예측 및 Hz 추천
     if len(X) > 0:
