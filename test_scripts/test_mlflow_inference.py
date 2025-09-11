@@ -676,10 +676,14 @@ def main() -> None:
                     round_to_int=opt_cfg.round_to_int,
                 )
 
-                # DataFrame에 결과 저장
+                # DataFrame에 결과 저장 (PumpOptimizer가 선택한 Hz에 대한 실제 예측값 사용)
                 mask = agg_with_recommendations["_time_gateway"] == t
-                agg_with_recommendations.loc[mask, cc.col_pred_mean] = gp_pred_mean[i]
-                agg_with_recommendations.loc[mask, cc.col_pred_ucb] = gp_pred_ucb[i]
+                agg_with_recommendations.loc[mask, cc.col_pred_mean] = recommendation[
+                    cc.col_pred_mean
+                ]
+                agg_with_recommendations.loc[mask, cc.col_pred_ucb] = recommendation[
+                    cc.col_pred_ucb
+                ]
                 agg_with_recommendations.loc[mask, cc.col_hz_out] = recommendation[
                     cc.col_hz_out
                 ]
