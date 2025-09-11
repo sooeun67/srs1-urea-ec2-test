@@ -111,7 +111,7 @@ def setup_preprocessing_config() -> tuple[
         column_config=cc,
         plant_code="SRS1",
         resample_sec=5,  # 5초 간격
-        ffill_limit_sec=20,  # 10분 이내 ffill
+        ffill_limit_sec=600,  # 10분 이내 ffill
     )
 
     # LGBMInferPreprocessingConfig 초기화
