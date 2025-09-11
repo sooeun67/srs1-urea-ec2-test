@@ -769,6 +769,11 @@ def main() -> None:
         lgbm_suggested_df, lgbm_cols_x_stat = lgbm_preprocessor.make_interval_features(
             df_mapped
         )
+        ### (2025-09-11 믿음 임시 print 추가) ###
+        print("`lgbm_suggested_df` after `make_interval_features`.")
+        for col in lgbm_suggested_df.columns:
+            print(f"\n=== {col} ===")
+            print(lgbm_suggested_df[col].tolist())
 
         # LGBM 모델 설정 업데이트
         lgbm_cols_x_original = cc.lgbm_feature_columns
@@ -780,6 +785,12 @@ def main() -> None:
         lgbm_suggested_df = lgbm_adjuster.predict_and_adjust(
             lgbm_suggested_df, return_flags=True
         )
+
+        ### (2025-09-11 믿음 임시 print 추가) ###
+        print("`lgbm_suggested_df` after `predict_and_adjust`.")
+        for col in lgbm_suggested_df.columns:
+            print(f"\n=== {col} ===")
+            print(lgbm_suggested_df[col].tolist())
 
         # LGBM 결과를 원본 DataFrame에 병합
         lgbm_result_cols = [cc.col_lgbm_db_pred_nox, cc.col_lgbm_db_hz_lgbm_adj]
@@ -793,6 +804,12 @@ def main() -> None:
         ]
 
         print("✅ LGBM 모델 예측 및 Hz 조정 완료")
+
+        ### (2025-09-11 믿음 임시 print 추가) ###
+        print("`agg_with_recommendations`")
+        for col in agg_with_recommendations.columns:
+            print(f"\n=== {col} ===")
+            print(agg_with_recommendations[col].tolist())
 
         # 최종 결과 출력 (처음 10개 행만)
         print("\n📊 최종 추천 결과 (처음 10개 행):")
@@ -822,6 +839,9 @@ def main() -> None:
             c for c in result_cols if c in agg_with_recommendations.columns
         ]
         print(agg_with_recommendations[available_cols].head(10))
+
+        ### (2025-09-11 믿음 임시 print 추가) ###
+        print(agg_with_recommendations[available_cols].tail(10))
 
     else:
         print("⚠️ 예측 가능한(결측 없는) 5초 구간이 없습니다.")
