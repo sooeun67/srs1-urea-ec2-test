@@ -415,9 +415,9 @@ def query_recent_influx() -> pd.DataFrame:
     # 주 관심 컬럼만 미리보기: REQUIRED_COLUMNS + time
     preview_cols = [c for c in ["time", *REQUIRED_COLUMNS] if c in df.columns]
     try:
-        print(df[preview_cols].head(20) if preview_cols else df.head(20))
+        print(df[preview_cols].head(200) if preview_cols else df.head(200))
     except Exception:
-        print(df.head(20))
+        print(df.head(200))
     return df
 
 
@@ -533,9 +533,11 @@ def main() -> None:
         lgbm_adjuster,
     ) = setup_preprocessing_config()
     print(f"✅ GP 모델 초기화 완료: {gp_model.model_config.plant_code}")
-    print(f"✅ LGBM 모델 초기화 완료: {lgbm_model.model_config.__class__.__name__}")
+    print(
+        f"ℹ️ LGBM 모델 초기화 완료: {lgbm_model.model_config.__class__.__name__} (비활성화)"
+    )
     print(f"✅ PumpOptimizer 초기화 완료")
-    print(f"✅ LGBM Adjuster 초기화 완료")
+    print(f"ℹ️ LGBM Adjuster 초기화 완료 (비활성화)")
 
     tracking_uri = os.environ.get("MLFLOW_TRACKING_URI")
     if tracking_uri:
@@ -571,16 +573,16 @@ def main() -> None:
         f"📊 GP 모델 정보: {model_info['status']}, 학습 샘플: {model_info.get('n_train', 'N/A')}"
     )
 
-    # 3) LGBM 모델 로드
+    # 3) LGBM 모델 로드 (디버깅 모드에서는 비활성화)
     lgbm_model_path = os.environ.get(
         "LGBM_MODEL_PATH", f"mlflow_artifacts/{run_id}/urea_gp_model/lgbm_model.txt"
     )
-    if not os.path.exists(lgbm_model_path):
-        raise FileNotFoundError(f"LGBM 모델 파일을 찾을 수 없습니다: {lgbm_model_path}")
+    # if not os.path.exists(lgbm_model_path):
+    #     raise FileNotFoundError(f"LGBM 모델 파일을 찾을 수 없습니다: {lgbm_model_path}")
 
-    # LGBM 모델 로드
-    lgbm_model.load(lgbm_model_path)
-    print(f"✅ LGBM 모델 로드 완료: {lgbm_model_path}")
+    # # LGBM 모델 로드
+    # lgbm_model.load(lgbm_model_path)
+    print(f"ℹ️ LGBM 모델 로드 비활성화 (디버깅 모드): {lgbm_model_path}")
 
     # 4) Influx 최근 데이터 조회
     df = query_recent_influx()
@@ -710,57 +712,50 @@ def main() -> None:
 
         print(f"\n✅ GP 모델 예측 완료: {len(valid_times)}개 시점")
 
-        # 7) LGBM 모델 예측 및 Hz 조정
-        print("\n🧠 LGBM 모델 예측 및 Hz 조정 시작...")
+        # 7) LGBM 모델 예측 및 Hz 조정 (디버깅을 위해 주석처리)
+        # print("\n🧠 LGBM 모델 예측 및 Hz 조정 시작...")
 
-        # LGBM 전처리: 요약통계량 Feature 생성
-        # [0910] LGBM 전처리 전에 컬럼명 매핑
-        df_mapped = agg_with_recommendations.copy()
-        column_mapping = {
-            "BR1_EO_O2_A": "br1_eo_o2_a",
-            "ICF_CCS_FG_T_1": "icf_ccs_fg_t_1",
-            "ICF_SCS_FG_T_1": "icf_scs_fg_t_1",
-            "ICF_TMS_NOX_A": "icf_tms_nox_a",
-        }
-        for influx_col, config_col in column_mapping.items():
-            if influx_col in df_mapped.columns:
-                df_mapped[config_col] = df_mapped[influx_col]
+        # # LGBM 전처리: 요약통계량 Feature 생성
+        # # [0910] LGBM 전처리 전에 컬럼명 매핑
+        # df_mapped = agg_with_recommendations.copy()
+        # column_mapping = {
+        #     "BR1_EO_O2_A": "br1_eo_o2_a",
+        #     "ICF_CCS_FG_T_1": "icf_ccs_fg_t_1",
+        #     "ICF_SCS_FG_T_1": "icf_scs_fg_t_1",
+        #     "ICF_TMS_NOX_A": "icf_tms_nox_a",
+        # }
+        # for influx_col, config_col in column_mapping.items():
+        #     if influx_col in df_mapped.columns:
+        #         df_mapped[config_col] = df_mapped[influx_col]
 
-        # LGBM 전처리 (매핑된 DataFrame 사용)
-        lgbm_suggested_df, lgbm_cols_x_stat = lgbm_preprocessor.make_interval_features(
-            df_mapped
-        )
+        # # LGBM 전처리 (매핑된 DataFrame 사용)
+        # lgbm_suggested_df, lgbm_cols_x_stat = lgbm_preprocessor.make_interval_features(
+        #     df_mapped
+        # )
 
-        # LGBM 모델 설정 업데이트
-        lgbm_cols_x_original = cc.lgbm_feature_columns
-        lgbm_cfg.lgbm_feature_columns_original = list(lgbm_cols_x_original)
-        lgbm_cfg.lgbm_feature_columns_summary = list(lgbm_cols_x_stat)
-        # lgbm_cfg.native_model_path = lgbm_model_path
+        # # LGBM 모델 설정 업데이트
+        # lgbm_cols_x_original = cc.lgbm_feature_columns
+        # lgbm_cfg.lgbm_feature_columns_original = list(lgbm_cols_x_original)
+        # lgbm_cfg.lgbm_feature_columns_summary = list(lgbm_cols_x_stat)
+        # # lgbm_cfg.native_model_path = lgbm_model_path
 
-        # LGBM 모델 예측 및 Hz 조정
-        lgbm_suggested_df = lgbm_adjuster.predict_and_adjust(
-            lgbm_suggested_df, return_flags=True
-        )
+        # # LGBM 모델 예측 및 Hz 조정
+        # lgbm_suggested_df = lgbm_adjuster.predict_and_adjust(
+        #     lgbm_suggested_df, return_flags=True
+        # )
 
-        # LGBM 결과를 원본 DataFrame에 병합
-        lgbm_result_cols = [cc.col_lgbm_db_pred_nox, cc.col_lgbm_db_hz_lgbm_adj]
-        for col in lgbm_result_cols:
-            if col in lgbm_suggested_df.columns:
-                agg_with_recommendations[col] = lgbm_suggested_df[col].values
+        # # LGBM 결과를 원본 DataFrame에 병합
+        # lgbm_result_cols = [cc.col_lgbm_db_pred_nox, cc.col_lgbm_db_hz_lgbm_adj]
+        # for col in lgbm_result_cols:
+        #     if col in lgbm_suggested_df.columns:
+        #         agg_with_recommendations[col] = lgbm_suggested_df[col].values
 
-        # [0910] col_hz_final 설정 (optimize_pump.py 방식)
-        # 기본값: LGBM 조정된 Hz 사용 (act_snr_pmp_bo_4)
-        if cc.col_lgbm_db_hz_lgbm_adj in agg_with_recommendations.columns:
-            agg_with_recommendations[cc.col_hz_final] = agg_with_recommendations[
-                cc.col_lgbm_db_hz_lgbm_adj
-            ]
-        else:
-            # LGBM 결과가 없으면 GP 전체 규칙 결과 사용
-            agg_with_recommendations[cc.col_hz_final] = agg_with_recommendations[
-                cc.col_hz_full_rule
-            ]
+        # [0910] col_hz_final 설정 (LGBM 비활성화 시 GP 전체 규칙 결과 사용)
+        agg_with_recommendations[cc.col_hz_final] = agg_with_recommendations[
+            cc.col_hz_full_rule
+        ]
 
-        print(f"✅ LGBM 모델 예측 완료: {len(lgbm_suggested_df)}개 시점")
+        print("ℹ️ LGBM 모델 예측 비활성화 (디버깅 모드)")
 
         # 최종 결과 출력 (처음 10개 행만)
         print("\n📊 최종 추천 결과 (처음 10개 행):")
@@ -774,11 +769,11 @@ def main() -> None:
             cc.col_safety_gap,
         ]
 
-        # LGBM 컬럼 추가
-        if cc.col_lgbm_db_pred_nox in agg_with_recommendations.columns:
-            result_cols.append(cc.col_lgbm_db_pred_nox)
-        if cc.col_lgbm_db_hz_lgbm_adj in agg_with_recommendations.columns:
-            result_cols.append(cc.col_lgbm_db_hz_lgbm_adj)
+        # LGBM 컬럼 추가 (디버깅 모드에서는 비활성화)
+        # if cc.col_lgbm_db_pred_nox in agg_with_recommendations.columns:
+        #     result_cols.append(cc.col_lgbm_db_pred_nox)
+        # if cc.col_lgbm_db_hz_lgbm_adj in agg_with_recommendations.columns:
+        #     result_cols.append(cc.col_lgbm_db_hz_lgbm_adj)
 
         # [0910] col_hz_final 추가 (최종 Hz 추천 값)
         if cc.col_hz_final in agg_with_recommendations.columns:
@@ -799,10 +794,10 @@ def main() -> None:
     print("\n📌 요약")
     print("- RUN_ID:", run_id)
     print("- GP 모델 경로:", model_file)
-    print("- LGBM 모델 경로:", lgbm_model_path)
+    print("- LGBM 모델 경로:", lgbm_model_path, "(비활성화)")
     print("- 입력 요약 행 수:", len(agg))
     print("- GP 모델 예측 완료: PumpOptimizer 활용")
-    print("- LGBM 모델 예측 완료: Hz 조정 포함")
+    print("- LGBM 모델 예측: 비활성화 (디버깅 모드)")
 
 
 if __name__ == "__main__":

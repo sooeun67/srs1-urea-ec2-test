@@ -241,90 +241,90 @@ def main():
     print(f"  Full rule  : {float(df_with_rules.iloc[0][cc.col_hz_full_rule]):.2f}")
     print("[INFO] Optimization completed.")
 
-    # -----------------------------------------------------------
-    # LGBM
-    # -----------------------------------------------------------
+    # # -----------------------------------------------------------
+    # # LGBM
+    # # -----------------------------------------------------------
 
-    # config
-    lgbm_prep_infer_cfg = LGBMInferPreprocessingConfig(column_config=cc)
-    lgbm_cols_x_original = cc.lgbm_feature_columns
+    # # config
+    # lgbm_prep_infer_cfg = LGBMInferPreprocessingConfig(column_config=cc)
+    # lgbm_cols_x_original = cc.lgbm_feature_columns
 
-    # Infer용 전처리: 요약통계량 Feature 생성
-    lgbm_pp = LGBMFeaturePreprocessor(lgbm_prep_infer_cfg)  # infer cfg를 써도 동작함
-    lgbm_suggested_df, lgbm_cols_x_stat = lgbm_pp.make_interval_features(df_one)
-    lgbm_suggested_df = lgbm_suggested_df.iloc[-1:,]
-    lgbm_suggested_df[cc.col_hz_raw_out] = float(
-        df_with_rules.iloc[-1][cc.col_hz_raw_out]
-    )
-    lgbm_suggested_df[cc.col_hz_init_rule] = float(
-        df_with_rules.iloc[-1][cc.col_hz_init_rule]
-    )
-    lgbm_suggested_df[cc.col_hz_full_rule] = float(
-        df_with_rules.iloc[-1][cc.col_hz_full_rule]
-    )
+    # # Infer용 전처리: 요약통계량 Feature 생성
+    # lgbm_pp = LGBMFeaturePreprocessor(lgbm_prep_infer_cfg)  # infer cfg를 써도 동작함
+    # lgbm_suggested_df, lgbm_cols_x_stat = lgbm_pp.make_interval_features(df_one)
+    # lgbm_suggested_df = lgbm_suggested_df.iloc[-1:,]
+    # lgbm_suggested_df[cc.col_hz_raw_out] = float(
+    #     df_with_rules.iloc[-1][cc.col_hz_raw_out]
+    # )
+    # lgbm_suggested_df[cc.col_hz_init_rule] = float(
+    #     df_with_rules.iloc[-1][cc.col_hz_init_rule]
+    # )
+    # lgbm_suggested_df[cc.col_hz_full_rule] = float(
+    #     df_with_rules.iloc[-1][cc.col_hz_full_rule]
+    # )
 
-    # === NOx 예측값 & Hz 보정값 생성 ===
+    # # === NOx 예측값 & Hz 보정값 생성 ===
 
-    # 원본 + 요약통계 피처를 합쳐 "최종 학습 피처"로 사용
-    lgbm_mc = LGBMModelConfig(
-        # ✅ 입력 컬럼(생성 시 주입)
-        lgbm_feature_columns_original=list(lgbm_cols_x_original),
-        lgbm_feature_columns_summary=list(lgbm_cols_x_stat),
-        # 저장 경로(Booster 포함)
-        # lgbm_model_path=args.lgbm_model_path,
-        # meta_path=args.lgbm_model_path,
-        native_model_path=args.lgbm_model_path,
-    )
-    lgbm_adjuster = LGBMPumpHzAdjuster(
-        column_config=cc,
-        model_config=lgbm_mc,
-        rule_config=RuleConfig(),
-        optimization_config=oc,
-    )
-    lgbm_suggested_df = lgbm_adjuster.predict_and_adjust(
-        lgbm_suggested_df, return_flags=True
-    )
+    # # 원본 + 요약통계 피처를 합쳐 "최종 학습 피처"로 사용
+    # lgbm_mc = LGBMModelConfig(
+    #     # ✅ 입력 컬럼(생성 시 주입)
+    #     lgbm_feature_columns_original=list(lgbm_cols_x_original),
+    #     lgbm_feature_columns_summary=list(lgbm_cols_x_stat),
+    #     # 저장 경로(Booster 포함)
+    #     # lgbm_model_path=args.lgbm_model_path,
+    #     # meta_path=args.lgbm_model_path,
+    #     native_model_path=args.lgbm_model_path,
+    # )
+    # lgbm_adjuster = LGBMPumpHzAdjuster(
+    #     column_config=cc,
+    #     model_config=lgbm_mc,
+    #     rule_config=RuleConfig(),
+    #     optimization_config=oc,
+    # )
+    # lgbm_suggested_df = lgbm_adjuster.predict_and_adjust(
+    #     lgbm_suggested_df, return_flags=True
+    # )
 
-    print(50 * "=")
-    print("\n=== LGBM Summary (single row) ===")
-    print(
-        f"Predicted NOx Value: {float(lgbm_suggested_df.iloc[0][cc.col_lgbm_db_pred_nox]):.2f}"
-    )
-    print(
-        f"Adjusted Pump Hz: {float(lgbm_suggested_df.iloc[0][cc.col_lgbm_db_hz_lgbm_adj]):.2f}"
-    )
-    print("[INFO] End.")
-    print(50 * "=")
+    # print(50 * "=")
+    # print("\n=== LGBM Summary (single row) ===")
+    # print(
+    #     f"Predicted NOx Value: {float(lgbm_suggested_df.iloc[0][cc.col_lgbm_db_pred_nox]):.2f}"
+    # )
+    # print(
+    #     f"Adjusted Pump Hz: {float(lgbm_suggested_df.iloc[0][cc.col_lgbm_db_hz_lgbm_adj]):.2f}"
+    # )
+    # print("[INFO] End.")
+    # print(50 * "=")
 
-    final_output_df = lgbm_suggested_df[
-        [
-            cc.col_datetime,
-            cc.col_hz_raw_out,
-            cc.col_hz_init_rule,
-            cc.col_hz_full_rule,
-            cc.col_lgbm_db_hz_lgbm_adj,
-            cc.col_lgbm_db_pred_nox,
-        ]
-    ].copy()
-    if int(args.hz_step_num) == 1:
-        final_output_df[cc.col_hz_final] = float(
-            lgbm_suggested_df.iloc[-1][cc.col_hz_raw_out]
-        )
-    elif int(args.hz_step_num) == 2:
-        final_output_df[cc.col_hz_final] = float(
-            lgbm_suggested_df.iloc[-1][cc.col_hz_init_rule]
-        )
-    elif int(args.hz_step_num) == 3:
-        final_output_df[cc.col_hz_final] = float(
-            lgbm_suggested_df.iloc[-1][cc.col_hz_full_rule]
-        )
-    elif int(args.hz_step_num) == 4:
-        final_output_df[cc.col_hz_final] = float(
-            lgbm_suggested_df.iloc[-1][cc.col_lgbm_db_hz_lgbm_adj]
-        )
-    else:
-        raise ValueError(f"Hz 추천은 1,2,3,4 중 하나를 선택해야 합니다.")
-    print(final_output_df.T)
+    # final_output_df = lgbm_suggested_df[
+    #     [
+    #         cc.col_datetime,
+    #         cc.col_hz_raw_out,
+    #         cc.col_hz_init_rule,
+    #         cc.col_hz_full_rule,
+    #         cc.col_lgbm_db_hz_lgbm_adj,
+    #         cc.col_lgbm_db_pred_nox,
+    #     ]
+    # ].copy()
+    # if int(args.hz_step_num) == 1:
+    #     final_output_df[cc.col_hz_final] = float(
+    #         lgbm_suggested_df.iloc[-1][cc.col_hz_raw_out]
+    #     )
+    # elif int(args.hz_step_num) == 2:
+    #     final_output_df[cc.col_hz_final] = float(
+    #         lgbm_suggested_df.iloc[-1][cc.col_hz_init_rule]
+    #     )
+    # elif int(args.hz_step_num) == 3:
+    #     final_output_df[cc.col_hz_final] = float(
+    #         lgbm_suggested_df.iloc[-1][cc.col_hz_full_rule]
+    #     )
+    # elif int(args.hz_step_num) == 4:
+    #     final_output_df[cc.col_hz_final] = float(
+    #         lgbm_suggested_df.iloc[-1][cc.col_lgbm_db_hz_lgbm_adj]
+    #     )
+    # else:
+    #     raise ValueError(f"Hz 추천은 1,2,3,4 중 하나를 선택해야 합니다.")
+    # print(final_output_df.T)
 
 
 if __name__ == "__main__":
