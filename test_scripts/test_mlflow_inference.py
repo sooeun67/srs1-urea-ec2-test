@@ -489,7 +489,13 @@ def aggregate_10min_to_5s(
     agg_pre = agg_pre.reset_index()
     agg_pre = agg_pre.sort_values(cc.col_datetime).head(120)
     print("🧾 5초 윈도우 요약(보간 전, UTC):")
+    print(f"   📊 전체 행 수: {len(agg_pre)}")
+    print(
+        f"   📅 시간 범위: {agg_pre[cc.col_datetime].min()} ~ {agg_pre[cc.col_datetime].max()}"
+    )
     print(agg_pre.head(4))
+    print("🧾 5초 윈도우 요약(보간 전, 마지막 4개):")
+    print(agg_pre.tail(4))
 
     # 3) preprocessor.py의 make_infer_ffill 활용
     print("🔧 preprocessor.py make_infer_ffill 적용 중...")
@@ -501,6 +507,13 @@ def aggregate_10min_to_5s(
 
     # 4) 최종 결과 정리
     agg_processed = agg_processed.sort_values(cc.col_datetime).head(120)
+    print("🔧 make_infer_ffill 적용 후:")
+    print(f"   📊 전체 행 수: {len(agg_processed)}")
+    print(
+        f"   📅 시간 범위: {agg_processed[cc.col_datetime].min()} ~ {agg_processed[cc.col_datetime].max()}"
+    )
+    print("🔧 make_infer_ffill 적용 후 (마지막 4개):")
+    print(agg_processed.tail(4))
 
     # 컬럼명을 원래 REQUIRED_COLUMNS로 되돌리기
     reverse_mapping = {v: k for k, v in column_mapping.items()}
@@ -513,6 +526,10 @@ def aggregate_10min_to_5s(
     agg_final = agg_final[ordered_cols]
 
     print("🧾 5초 윈도우 요약(보간 후, UTC):")
+    print(f"   📊 최종 행 수: {len(agg_final)}")
+    print(
+        f"   📅 최종 시간 범위: {agg_final['_time_gateway'].min()} ~ {agg_final['_time_gateway'].max()}"
+    )
     print(agg_final.head(4))
 
     return agg_final
