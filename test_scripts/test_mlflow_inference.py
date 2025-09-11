@@ -333,7 +333,7 @@ def query_recent_influx() -> pd.DataFrame:
     measurement = get_env("INFLUX_MEASUREMENT", "SRS1")
     # 요구사항: 최근 10분 조회 (5초 간격 → 120개) 또는 절대 시작시각 기반 조회
     window = get_env("INFLUX_WINDOW", "10m")
-    limit = int(get_env("INFLUX_LIMIT", "200"))
+    limit = int(get_env("INFLUX_LIMIT", "600"))
     start_time_kst = get_env("START_TIME_KST", "").strip()
     start_time_utc = get_env("START_TIME", "").strip()
 
