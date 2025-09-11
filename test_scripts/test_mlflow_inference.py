@@ -489,7 +489,7 @@ def aggregate_10min_to_5s(
     agg_pre = agg_pre.reset_index()
     agg_pre = agg_pre.sort_values(cc.col_datetime).head(120)
     print("🧾 5초 윈도우 요약(보간 전, UTC):")
-    print(agg_pre.tail(4))
+    print(agg_pre.head(4))
 
     # 3) preprocessor.py의 make_infer_ffill 활용
     print("🔧 preprocessor.py make_infer_ffill 적용 중...")
@@ -513,7 +513,7 @@ def aggregate_10min_to_5s(
     agg_final = agg_final[ordered_cols]
 
     print("🧾 5초 윈도우 요약(보간 후, UTC):")
-    print(agg_final.tail(4))
+    print(agg_final.head(4))
 
     return agg_final
 
