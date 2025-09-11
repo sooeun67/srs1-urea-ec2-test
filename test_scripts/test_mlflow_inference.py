@@ -717,9 +717,17 @@ def main() -> None:
                 ].iloc[0]
 
                 if i < 5:  # 처음 5개만 상세 출력
+                    # PumpOptimizer에서 선택한 Hz에 대한 실제 NOx 예측값 출력
+                    selected_hz = df_with_rules[cc.col_hz_raw_out].iloc[0]
+                    selected_nox_mean = recommendation[cc.col_pred_mean]
+                    selected_nox_ucb = recommendation[cc.col_pred_ucb]
+                    safety_gap = recommendation[cc.col_safety_gap]
+                    print(f"   🎛️ Hz 추천 (GP): {selected_hz:.1f} Hz")
                     print(
-                        f"   🎛️ Hz 추천 (GP): {df_with_rules[cc.col_hz_raw_out].iloc[0]:.1f} Hz"
+                        f"   📈 예측 NOx: {selected_nox_mean:.3f} (UCB: {selected_nox_ucb:.3f})"
                     )
+                    print(f"   🛡️ 안전 여유: {safety_gap:.3f}")
+                    print(f"   🔧 규칙 후처리 적용 중...")
                     print(
                         f"   🎛️ Hz 추천 (O2규칙): {df_with_rules[cc.col_hz_init_rule].iloc[0]:.1f} Hz"
                     )
