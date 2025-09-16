@@ -61,23 +61,17 @@ def test_column_availability():
             database=database,
         )
 
-        # 최근 1시간 데이터에서 컬럼 확인
+        # 현재 시각 기준 최근 데이터 조회 (시간 범위 없이 최근 20개만)
         now = datetime.utcnow()
-        start_time = now - timedelta(hours=1)
-
-        start_utc = start_time.strftime("%Y-%m-%dT%H:%M:%SZ")
-        end_utc = now.strftime("%Y-%m-%dT%H:%M:%SZ")
-
-        print(f"📅 조회 기간: {start_utc} ~ {end_utc}")
+        print(f"📅 현재 시각(UTC): {now.strftime('%Y-%m-%d %H:%M:%S')} UTC")
         print(f"📊 측정값: {measurement}")
         print()
 
-        # 1. 전체 컬럼 조회 (샘플)
+        # 1. 전체 컬럼 조회 (현재 시각 기준 최근 20개)
         query_all = f"""
         SELECT * FROM "{measurement}" 
-        WHERE time >= '{start_utc}' AND time <= '{end_utc}' 
         ORDER BY time DESC 
-        LIMIT 50
+        LIMIT 20
         """
 
         print("🔎 전체 컬럼 조회 쿼리:")
@@ -87,13 +81,28 @@ def test_column_availability():
         df_all = pd.DataFrame(list(result.get_points()))
 
         if df_all.empty:
-            print("❌ 해당 기간에 데이터가 없습니다.")
+            print("❌ 최근 데이터가 없습니다.")
             return
 
         print(f"✅ 전체 컬럼 수: {len(df_all.columns)}")
+        print(f"✅ 조회된 행 수: {len(df_all)}")
+
+        # 시간 범위 표시
+        if "time" in df_all.columns:
+            df_all["time"] = pd.to_datetime(df_all["time"])
+            print(
+                f"📅 데이터 시간 범위: {df_all['time'].min()} ~ {df_all['time'].max()}"
+            )
+
+        print()
         print("📋 사용 가능한 모든 컬럼:")
         for i, col in enumerate(sorted(df_all.columns), 1):
             print(f"   {i:3d}. {col}")
+        print()
+
+        # 최근 5개 행의 샘플 데이터 표시
+        print("📊 최근 5개 행 샘플:")
+        print(df_all.head(5))
         print()
 
         # 2. 요청된 컬럼들 존재 여부 확인
@@ -120,7 +129,6 @@ def test_column_availability():
 
             query_specific = f"""
             SELECT {columns_str} FROM "{measurement}" 
-            WHERE time >= '{start_utc}' AND time <= '{end_utc}' 
             ORDER BY time DESC 
             LIMIT 5
             """
