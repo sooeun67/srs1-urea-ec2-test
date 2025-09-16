@@ -7,11 +7,15 @@ import os
 import sys
 import pandas as pd
 from datetime import datetime, timedelta
+from pathlib import Path
 
 # 프로젝트 루트 디렉토리를 Python 경로에 추가
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+THIS_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = THIS_DIR.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
-from repository.influx import InfluxRepository
+from influxdb import InfluxDBClient
 
 
 def test_column_availability():
@@ -35,9 +39,27 @@ def test_column_availability():
     print("=" * 60)
 
     try:
-        # InfluxDB 연결
-        repo = InfluxRepository()
-        measurement = "SRS1"
+        # InfluxDB 연결 (환경변수 또는 기본값 사용)
+        host = os.getenv("INFLUX_HOST", "10.238.27.132")
+        port = int(os.getenv("INFLUX_PORT", "8086"))
+        username = os.getenv("INFLUX_USERNAME", "read_user")
+        password = os.getenv("INFLUX_PASSWORD", "!Skepinfluxuser25")
+        database = os.getenv("INFLUX_DB", "SRS1")
+        measurement = os.getenv("INFLUX_MEASUREMENT", "SRS1")
+
+        print(f"🔗 InfluxDB 연결 정보:")
+        print(f"   • Host: {host}:{port}")
+        print(f"   • Database: {database}")
+        print(f"   • Username: {username}")
+        print()
+
+        client = InfluxDBClient(
+            host=host,
+            port=port,
+            username=username,
+            password=password,
+            database=database,
+        )
 
         # 최근 1시간 데이터에서 컬럼 확인
         now = datetime.utcnow()
@@ -61,7 +83,8 @@ def test_column_availability():
         print("🔎 전체 컬럼 조회 쿼리:")
         print(query_all)
 
-        df_all = repo.query_to_dataframe(query_all)
+        result = client.query(query_all)
+        df_all = pd.DataFrame(list(result.get_points()))
 
         if df_all.empty:
             print("❌ 해당 기간에 데이터가 없습니다.")
@@ -106,7 +129,8 @@ def test_column_availability():
             print("🔎 존재하는 컬럼들로 테스트 쿼리:")
             print(query_specific)
 
-            df_specific = repo.query_to_dataframe(query_specific)
+            result_specific = client.query(query_specific)
+            df_specific = pd.DataFrame(list(result_specific.get_points()))
 
             if not df_specific.empty:
                 print()
