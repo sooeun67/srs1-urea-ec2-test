@@ -238,6 +238,11 @@ def main():
             "ICF_TMS_NOX_A",
             "ACC_SNR_AI_1A",
             "ACT_STATUS",
+            "NOX_30m_Value",
+            "NOX_EQ_Status",
+            "NOX_Value",
+            "SNR_EQ_UW_F_1",
+            "ACT_SNR_PMP_UW_S",
         ]
     else:
         columns = args.columns
