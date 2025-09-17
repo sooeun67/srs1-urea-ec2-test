@@ -140,6 +140,7 @@ def test_column_availability():
 
             query_specific = f"""
             SELECT {columns_str} FROM "{measurement}" 
+            WHERE time >= '{start_utc}' AND time <= '{end_utc}'
             ORDER BY time DESC 
             LIMIT 20
             """
