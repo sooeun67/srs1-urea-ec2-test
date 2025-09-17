@@ -133,6 +133,21 @@ def export_influx_data(
         print(f"   • 행 수: {len(df):,}")
         print(f"   • 컬럼 수: {len(df.columns)}")
 
+        # GitHub을 통한 데이터 전송 안내
+        print(f"\n🔄 GitHub을 통한 데이터 전송 방법:")
+        print(f"   1. git add {output_path.name}")
+        print(f"   2. git commit -m 'Add exported data: {output_path.name}'")
+        print(f"   3. git push origin main")
+        print(f"   4. 로컬에서 git pull origin main 후 {output_path.name} 사용")
+
+        # 파일 크기 확인
+        file_size_mb = output_path.stat().st_size / (1024 * 1024)
+        if file_size_mb > 25:
+            print(f"   ⚠️ 파일이 {file_size_mb:.1f}MB로 GitHub 제한(25MB)을 초과합니다.")
+            print(
+                f"   💡 --hours 옵션으로 데이터 범위를 줄이거나 특정 컬럼만 선택하세요."
+            )
+
         return output_path
 
     except Exception as e:
@@ -169,6 +184,13 @@ def main():
     )
     parser.add_argument(
         "--all-target-columns", action="store_true", help="모든 타겟 컬럼 내보내기"
+    )
+
+    # 데이터 분할 옵션
+    parser.add_argument(
+        "--split-hours",
+        type=float,
+        help="데이터를 지정된 시간 단위로 분할 (예: 0.5 = 30분씩)",
     )
 
     args = parser.parse_args()
@@ -221,17 +243,60 @@ def main():
         columns = args.columns
 
     # 데이터 내보내기 실행
-    result = export_influx_data(
-        columns=columns,
-        hours=args.hours,
-        output_file=args.output,
-        measurement=args.measurement,
-    )
+    if args.split_hours and args.hours > args.split_hours:
+        # 데이터 분할 처리
+        total_hours = args.hours
+        split_hours = args.split_hours
+        num_splits = int(total_hours / split_hours) + (
+            1 if total_hours % split_hours > 0 else 0
+        )
 
-    if result:
-        print(f"\n🚀 다음 명령으로 로컬로 다운로드하세요:")
         print(
-            f"scp -i ~/.ssh/your-key.pem ssm-user@your-ec2-ip:~/urea/sooeun/srs1-urea-ec2-test/{result.name} ./"
+            f"📊 데이터 분할: {total_hours}시간을 {split_hours}시간씩 {num_splits}개 파일로 분할"
+        )
+
+        results = []
+        for i in range(num_splits):
+            start_offset = i * split_hours
+            end_offset = min((i + 1) * split_hours, total_hours)
+            current_hours = end_offset - start_offset
+
+            # 분할된 파일명 생성
+            if args.output:
+                base_name = args.output.rsplit(".", 1)[0]
+                ext = args.output.rsplit(".", 1)[1] if "." in args.output else "csv"
+                split_output = f"{base_name}_part{i+1:02d}.{ext}"
+            else:
+                split_output = None
+
+            print(
+                f"\n📁 파트 {i+1}/{num_splits}: 최근 {end_offset:.1f}~{start_offset:.1f}시간 전 데이터"
+            )
+
+            result = export_influx_data(
+                columns=columns,
+                hours=current_hours,
+                output_file=split_output,
+                measurement=args.measurement,
+            )
+
+            if result:
+                results.append(result)
+
+        if results:
+            print(f"\n🎉 총 {len(results)}개 파일 생성 완료!")
+            print(f"🔄 GitHub 업로드 명령:")
+            for result in results:
+                print(f"   git add {result.name}")
+            print(f"   git commit -m 'Add exported data: {len(results)} files'")
+            print(f"   git push origin main")
+    else:
+        # 단일 파일 처리
+        result = export_influx_data(
+            columns=columns,
+            hours=args.hours,
+            output_file=args.output,
+            measurement=args.measurement,
         )
 
 
