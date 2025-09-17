@@ -61,17 +61,27 @@ def test_column_availability():
             database=database,
         )
 
-        # 현재 시각 기준 최근 데이터 조회 (시간 범위 없이 최근 20개만)
+        # 현재 시각 기준 이전 30개 행 조회 (30초 전부터 현재까지)
         now = datetime.utcnow()
-        print(f"📅 현재 시각(UTC): {now.strftime('%Y-%m-%d %H:%M:%S')} UTC")
+        start_time = now - timedelta(seconds=30)
+        
+        now_str = now.strftime('%Y-%m-%d %H:%M:%S')
+        start_str = start_time.strftime('%Y-%m-%d %H:%M:%S')
+        
+        print(f"📅 현재 시각(UTC): {now_str} UTC")
+        print(f"📅 조회 범위: {start_str} ~ {now_str} (이전 30초)")
         print(f"📊 측정값: {measurement}")
         print()
 
-        # 1. 전체 컬럼 조회 (현재 시각 기준 최근 20개)
+        # 1. 전체 컬럼 조회 (현재 시각 기준 이전 30개)
+        start_utc = start_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+        end_utc = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+        
         query_all = f"""
         SELECT * FROM "{measurement}" 
+        WHERE time >= '{start_utc}' AND time <= '{end_utc}'
         ORDER BY time DESC 
-        LIMIT 20
+        LIMIT 30
         """
 
         print("🔎 전체 컬럼 조회 쿼리:")
@@ -81,7 +91,8 @@ def test_column_availability():
         df_all = pd.DataFrame(list(result.get_points()))
 
         if df_all.empty:
-            print("❌ 최근 데이터가 없습니다.")
+            print("❌ 지정된 시간 범위에 데이터가 없습니다.")
+            print("💡 시간 범위를 늘려서 다시 시도해보세요.")
             return
 
         print(f"✅ 전체 컬럼 수: {len(df_all.columns)}")
@@ -90,9 +101,14 @@ def test_column_availability():
         # 시간 범위 표시
         if "time" in df_all.columns:
             df_all["time"] = pd.to_datetime(df_all["time"])
-            print(
-                f"📅 데이터 시간 범위: {df_all['time'].min()} ~ {df_all['time'].max()}"
-            )
+            data_min = df_all["time"].min()
+            data_max = df_all["time"].max()
+            print(f"📅 실제 데이터 시간 범위: {data_min} ~ {data_max}")
+            
+            # 시간 차이 분석
+            time_diff = (data_min - pd.to_datetime(start_utc)).total_seconds()
+            if abs(time_diff) > 60:  # 1분 이상 차이
+                print(f"⚠️ 시간 차이 감지: 요청 시간과 {time_diff:.0f}초 차이")
 
         print()
         print("📋 사용 가능한 모든 컬럼:")
@@ -100,9 +116,10 @@ def test_column_availability():
             print(f"   {i:3d}. {col}")
         print()
 
-        # 최근 5개 행의 샘플 데이터 표시
-        print("📊 최근 5개 행 샘플:")
-        print(df_all.head(5))
+        # 최근 5개 행의 샘플 데이터 표시 (시간 컬럼 포함)
+        print("📊 최근 5개 행 샘플 (시간 포함):")
+        display_cols = ["time"] + [col for col in df_all.columns if col != "time"][:10]  # 시간 + 처음 10개 컬럼만
+        print(df_all[display_cols].head(5))
         print()
 
         # 2. 요청된 컬럼들 존재 여부 확인
@@ -129,6 +146,7 @@ def test_column_availability():
 
             query_specific = f"""
             SELECT {columns_str} FROM "{measurement}" 
+            WHERE time >= '{start_utc}' AND time <= '{end_utc}'
             ORDER BY time DESC 
             LIMIT 5
             """
