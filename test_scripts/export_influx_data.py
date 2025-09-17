@@ -168,7 +168,7 @@ def main():
         help="내보낼 컬럼명 (예: time _time_gateway ACT_SNR_PMP_BO_1)",
     )
     parser.add_argument(
-        "--hours", "-h", type=float, default=1, help="조회할 시간 범위 (기본: 1시간)"
+        "--hours", type=float, default=1, help="조회할 시간 범위 (기본: 1시간)"
     )
     parser.add_argument("--output", "-o", help="출력 파일명 (기본: 자동 생성)")
     parser.add_argument(
