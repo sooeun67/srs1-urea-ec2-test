@@ -112,8 +112,8 @@ def test_column_availability():
         print()
 
         # 최근 5개 행의 샘플 데이터 표시
-        print("📊 최근 5개 행 샘플:")
-        print(df_all.head(5))
+        print("📊 최근 20개 행 샘플:")
+        print(df_all.head(20))
         print()
 
         # 2. 요청된 컬럼들 존재 여부 확인
