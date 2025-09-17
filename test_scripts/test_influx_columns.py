@@ -141,7 +141,7 @@ def test_column_availability():
             query_specific = f"""
             SELECT {columns_str} FROM "{measurement}" 
             ORDER BY time DESC 
-            LIMIT 5
+            LIMIT 20
             """
 
             print()
