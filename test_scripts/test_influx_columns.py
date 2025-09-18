@@ -62,15 +62,15 @@ def test_column_availability():
             database=database,
         )
 
-        # 현재 시각 기준 이전 30개 행 조회 (30초 전부터 현재까지)
+        # 현재 시각 기준 이전 5분간 조회 (더 많은 데이터 확보)
         now = datetime.utcnow()
-        start_time = now - timedelta(seconds=30)
+        start_time = now - timedelta(minutes=1)
 
         now_str = now.strftime("%Y-%m-%d %H:%M:%S")
         start_str = start_time.strftime("%Y-%m-%d %H:%M:%S")
 
         print(f"📅 현재 시각(UTC): {now_str} UTC")
-        print(f"📅 조회 범위: {start_str} ~ {now_str} (이전 30초)")
+        print(f"📅 조회 범위: {start_str} ~ {now_str} (이전 1분)")
         print(f"📊 측정값: {measurement}")
         print()
 
@@ -82,7 +82,7 @@ def test_column_availability():
         SELECT * FROM "{measurement}" 
         WHERE time >= '{start_utc}' AND time <= '{end_utc}'
         ORDER BY time DESC 
-        LIMIT 30
+        LIMIT 50
         """
 
         print("🔎 전체 컬럼 조회 쿼리:")
@@ -111,7 +111,7 @@ def test_column_availability():
             print(f"   {i:3d}. {col}")
         print()
 
-        # 최근 5개 행의 샘플 데이터 표시
+        # 최근 20개 행의 샘플 데이터 표시
         print("📊 최근 20개 행 샘플:")
         print(df_all.head(20))
         print()
@@ -140,6 +140,7 @@ def test_column_availability():
 
             query_specific = f"""
             SELECT {columns_str} FROM "{measurement}" 
+            WHERE time >= '{start_utc}' AND time <= '{end_utc}'
             ORDER BY time DESC 
             LIMIT 20
             """
@@ -153,8 +154,15 @@ def test_column_availability():
 
             if not df_specific.empty:
                 print()
-                print("✅ 테스트 쿼리 결과 (최근 5개 행):")
+                print("✅ 테스트 쿼리 결과 (최근 20개 행):")
                 print(df_specific)
+                print()
+                print("📊 각 컬럼별 데이터 요약:")
+                for col in available_columns:
+                    if col != "time":
+                        non_null_count = df_specific[col].count()
+                        total_count = len(df_specific)
+                        print(f"   • {col}: {non_null_count}/{total_count} 개 값 존재")
             else:
                 print("❌ 테스트 쿼리 결과가 비어있습니다.")
 
