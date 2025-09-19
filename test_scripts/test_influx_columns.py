@@ -40,8 +40,8 @@ def test_column_availability():
 
     try:
         # InfluxDB 연결 (환경변수 또는 기본값 사용)
-        # host = os.getenv("INFLUX_HOST", "10.238.27.132")
-        host = os.getenv("INFLUX_HOST", "10.238.24.150")
+        # host = os.getenv("INFLUX_HOST", "10.238.24.150") # 개발
+        host = os.getenv("INFLUX_HOST", "10.238.27.132")  # 운영
         port = int(os.getenv("INFLUX_PORT", "8086"))
         username = os.getenv("INFLUX_USERNAME", "read_user")
         password = os.getenv("INFLUX_PASSWORD", "!Skepinfluxuser25")
