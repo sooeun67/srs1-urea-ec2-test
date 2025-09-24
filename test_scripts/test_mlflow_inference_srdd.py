@@ -64,12 +64,10 @@ def aggregate_10min_to_5s(
 
     # 컬럼명 매핑 (InfluxDB → ColumnConfig)
     column_mapping = {
-        "BR1_EO_O2_A": cc.col_o2,
+        "BR1_EO_FG_A": cc.col_o2,
         "SNR_PMP_UW_S_1": cc.col_hz,
-        "ICF_CCS_FG_T_1": cc.col_inner_temp,
         "ICF_SCS_FG_T_1": cc.col_outer_temp,
         "ICF_TMS_NOX_A": cc.col_nox,
-        "ACC_SNR_AI_1A": cc.col_ai,
         "ACT_STATUS": cc.col_act_status,
     }
 
@@ -140,12 +138,10 @@ def aggregate_10min_to_5s(
     # 열 순서 정렬: REQUIRED_COLUMNS 순서 유지(존재하는 것만)
     required_columns = [
         "_time_gateway",
-        "BR1_EO_O2_A",
+        "BR1_EO_FG_A",
         "SNR_PMP_UW_S_1",
-        "ICF_CCS_FG_T_1",
         "ICF_SCS_FG_T_1",
         "ICF_TMS_NOX_A",
-        "ACC_SNR_AI_1A",
         "ACT_STATUS",
     ]
     ordered_cols = [c for c in required_columns if c in agg_final.columns]
@@ -360,12 +356,10 @@ def query_recent_influx() -> pd.DataFrame:
         c
         for c in [
             "time",
-            "BR1_EO_O2_A",
+            "BR1_EO_FG_A",
             "SNR_PMP_UW_S_1",
-            "ICF_CCS_FG_T_1",
             "ICF_SCS_FG_T_1",
             "ICF_TMS_NOX_A",
-            "ACC_SNR_AI_1A",
             "ACT_STATUS",
         ]
         if c in df.columns
@@ -389,8 +383,8 @@ def main() -> None:
     print("🚀 SRDD GP 모델 기반 실시간 추론 및 Hz 추천 테스트 시작")
     print("🚀" + "=" * 58)
 
-    # 0) 전처리 설정 및 GP/LGBM 모델, PumpOptimizer 초기화
-    print("⚙️ 전처리 설정 및 GP/LGBM 모델, PumpOptimizer 초기화 중...")
+    # 0) 전처리 설정 및 GP/LGBM 모델, PumpOptimizer 초기화 (주석처리 - 모델 미준비)
+    print("⚙️ 전처리 설정 초기화 중...")
     (
         cc,
         infer_cfg,
@@ -405,53 +399,52 @@ def main() -> None:
         pump_optimizer,
         lgbm_adjuster,
     ) = setup_preprocessing_config()
-    print(f"✅ GP 모델 초기화 완료: {gp_model.model_config.plant_code}")
-    print(
-        f"ℹ️ LGBM 모델 초기화 완료: {lgbm_model.model_config.__class__.__name__} (비활성화)"
-    )
-    print(f"✅ PumpOptimizer 초기화 완료")
-    print(f"ℹ️ LGBM Adjuster 초기화 완료 (비활성화)")
+    print(f"✅ 전처리 설정 초기화 완료: {cc.plant_code}")
+    # print(f"✅ GP 모델 초기화 완료: {gp_model.model_config.plant_code}")
+    # print(f"ℹ️ LGBM 모델 초기화 완료: {lgbm_model.model_config.__class__.__name__} (비활성화)")
+    # print(f"✅ PumpOptimizer 초기화 완료")
+    # print(f"ℹ️ LGBM Adjuster 초기화 완료 (비활성화)")
 
-    tracking_uri = os.environ.get("MLFLOW_TRACKING_URI")
-    if tracking_uri:
-        print(f"🔗 MLFLOW_TRACKING_URI: {tracking_uri}")
-    else:
-        print(
-            "⚠️ MLFLOW_TRACKING_URI가 설정되지 않았습니다. mlflow 기본 설정을 사용합니다."
-        )
+    # tracking_uri = os.environ.get("MLFLOW_TRACKING_URI")
+    # if tracking_uri:
+    #     print(f"🔗 MLFLOW_TRACKING_URI: {tracking_uri}")
+    # else:
+    #     print(
+    #         "⚠️ MLFLOW_TRACKING_URI가 설정되지 않았습니다. mlflow 기본 설정을 사용합니다."
+    #     )
 
-    # 1) RUN 선택
-    if tracking_uri:
-        import mlflow
+    # # 1) RUN 선택 (주석처리 - 모델 미준비)
+    # if tracking_uri:
+    #     import mlflow
+    #     mlflow.set_tracking_uri(tracking_uri)
+    # run_id = os.environ.get("RUN_ID", "8df2907f144a4dcd80fe0d834be77f65")
+    # print(f"🏷️ 사용 RUN_ID: {run_id}")
 
-        mlflow.set_tracking_uri(tracking_uri)
-    run_id = os.environ.get("RUN_ID", "8df2907f144a4dcd80fe0d834be77f65")
-    print(f"🏷️ 사용 RUN_ID: {run_id}")
+    # 2) GP 모델 로드 (주석처리 - 모델 미준비)
+    # model_file = f"mlflow_artifacts/{run_id}/urea_gp_model/gp_model.joblib"
+    # if not os.path.exists(model_file):
+    #     # 대안 경로 시도
+    #     model_file = f"mlflow_artifacts/{run_id}/gp_model.joblib"
+    #     if not os.path.exists(model_file):
+    #         raise FileNotFoundError(f"GP 모델 파일을 찾을 수 없습니다: {model_file}")
 
-    # 2) GP 모델 로드
-    model_file = f"mlflow_artifacts/{run_id}/urea_gp_model/gp_model.joblib"
-    if not os.path.exists(model_file):
-        # 대안 경로 시도
-        model_file = f"mlflow_artifacts/{run_id}/gp_model.joblib"
-        if not os.path.exists(model_file):
-            raise FileNotFoundError(f"GP 모델 파일을 찾을 수 없습니다: {model_file}")
+    # # GP 모델 로드
+    # gp_model.load(model_file)
+    # print(f"✅ GP 모델 로드 완료: {model_file}")
 
-    # GP 모델 로드
-    gp_model.load(model_file)
-    print(f"✅ GP 모델 로드 완료: {model_file}")
+    # 3) LGBM 모델 로드 (주석처리 - 모델 미준비)
+    # lgbm_model_path = os.environ.get(
+    #     "LGBM_MODEL_PATH", f"mlflow_artifacts/{run_id}/urea_gp_model/lgbm_model.joblib"
+    # )
+    # if not os.path.exists(lgbm_model_path):
+    #     raise FileNotFoundError(f"LGBM 모델 파일을 찾을 수 없습니다: {lgbm_model_path}")
 
-    # 3) LGBM 모델 로드
-    lgbm_model_path = os.environ.get(
-        "LGBM_MODEL_PATH", f"mlflow_artifacts/{run_id}/urea_gp_model/lgbm_model.joblib"
-    )
-    if not os.path.exists(lgbm_model_path):
-        raise FileNotFoundError(f"LGBM 모델 파일을 찾을 수 없습니다: {lgbm_model_path}")
-
-    # LGBM 모델 로드
-    lgbm_model.load(lgbm_model_path)
-    print(f"✅ LGBM 모델 로드 완료: {lgbm_model_path}")
+    # # LGBM 모델 로드
+    # lgbm_model.load(lgbm_model_path)
+    # print(f"✅ LGBM 모델 로드 완료: {lgbm_model_path}")
 
     # 4) Influx 최근 데이터 조회 (SRDD용)
+    print("🔍 InfluxDB에서 실시간 데이터 조회 중...")
     df = query_recent_influx()
 
     if df.empty:
@@ -459,233 +452,52 @@ def main() -> None:
         return
 
     print(f"📈 원본 데이터: {len(df)}행")
-    print(f"📅 시간 범위: {df['_time_gateway'].min()} ~ {df['_time_gateway'].max()}")
+    print(f"📅 시간 범위: {df['time'].min()} ~ {df['time'].max()}")
 
     # 5) 5초 윈도우 요약(최근 10분 → 120행) - SRS1과 동일한 로직 사용
+    print("🔄 5초 윈도우 요약 처리 중...")
     agg = aggregate_10min_to_5s(df, preprocessor, cc)
-    print("🧾 모델 입력용 요약(열 순서 고정):", agg.shape)
-    print(agg)
+    print("🧾 5초 윈도우 요약 완료:", agg.shape)
+    print("📊 요약된 데이터 (처음 5개 행):")
+    print(agg.head())
+    print("📊 요약된 데이터 (마지막 5개 행):")
+    print(agg.tail())
 
-    # 6) 모델 입력행 만들기: ColumnConfig의 gp_feature_columns 활용
-    feature_cols = cc.gp_feature_columns  # SRDD 프리셋에 따라 col_outer_temp 사용
-    # InfluxDB 컬럼명으로 변환 (SRDD용)
-    influx_feature_cols = [
-        "SNR_PMP_UW_S_1",
-        "BR1_EO_O2_A",
-        "ICF_SCS_FG_T_1",
-    ]  # SRDD는 출구온도 사용
+    # 6) 데이터 품질 확인
+    print("\n📊 데이터 품질 확인:")
+    print(f"   - 전체 행 수: {len(agg)}")
+    print(f"   - 컬럼 수: {len(agg.columns)}")
+    print(f"   - 컬럼 목록: {list(agg.columns)}")
 
-    missing_feat = [c for c in influx_feature_cols if c not in agg.columns]
-    if missing_feat:
-        raise KeyError(f"모델 입력 피처 누락: {missing_feat}")
+    # 주요 센서 데이터 확인
+    sensor_cols = ["BR1_EO_FG_A", "SNR_PMP_UW_S_1", "ICF_SCS_FG_T_1", "ICF_TMS_NOX_A"]
+    for col in sensor_cols:
+        if col in agg.columns:
+            non_null_count = agg[col].count()
+            null_count = agg[col].isnull().sum()
+            print(f"   - {col}: {non_null_count}개 유효값, {null_count}개 NULL")
+        else:
+            print(f"   - {col}: 컬럼 없음")
 
-    X_all = agg[influx_feature_cols]
-    valid_mask = ~X_all.isna().any(axis=1)
-    invalid_times = agg.loc[~valid_mask, "_time_gateway"].tolist()
-    if invalid_times:
-        print(
-            f"[WARN] 결측치로 인해 예측에서 제외된 5초 구간: {len(invalid_times)}건 → {invalid_times}"
-        )
+    # 결측치가 있는 행 확인
+    missing_data = agg.isnull().any(axis=1).sum()
+    print(f"   - 결측치가 있는 행: {missing_data}개")
 
-    X = X_all.loc[valid_mask].to_numpy(dtype=float)
-    valid_times = agg.loc[valid_mask, "_time_gateway"].tolist()
-    print("🧮 예측 입력 배열 형태:", X.shape)
-    print(f"📋 피처 컬럼: {influx_feature_cols}")
-    print("🔍 GP 모델 입력 데이터 (처음 5개 행):")
-    print(X[:5])
-
-    # 7) GP 모델 예측 및 Hz 추천: 각 5초 윈도우에 대해 NOx 예측 및 Hz 추천
-    if len(X) > 0:
-        print("🧠 GP 모델 예측 및 Hz 추천 시작...")
-
-        # 예측 결과를 저장할 DataFrame 준비
-        agg_with_recommendations = agg.copy()
-
-        # GP 모델 일괄 예측 (120개 행)
-        print("📊 GP 모델 일괄 예측 중...")
-        gp_pred_mean, gp_pred_std = gp_model.predict(X, return_std=True)
-        gp_pred_ucb = gp_pred_mean + 1.96 * gp_pred_std  # 95% 신뢰구간 상한
-
-        # 각 유효한 시점에 대해 Hz 추천 수행
-        for i, (t, x_row) in enumerate(zip(valid_times, X)):
-            if i < 5:  # 처음 5개만 상세 출력
-                print(f"\n🎯 시점 {i+1}: {t}")
-                print(
-                    f"   📊 NOx 예측: mean={gp_pred_mean[i]:.3f} ± {gp_pred_std[i]:.3f} (UCB: {gp_pred_ucb[i]:.3f})"
-                )
-
-            # PumpOptimizer를 위한 입력 데이터 준비
-            current_row = agg[agg["_time_gateway"] == t].iloc[0]
-
-            # Hz 추천 수행
-            try:
-                recommendation = pump_optimizer.predict_pump_hz(
-                    target_nox=opt_cfg.target_nox,
-                    pump_bounds=opt_cfg.pump_bounds,
-                    current_oxygen=float(current_row["BR1_EO_O2_A"]),
-                    current_temp=float(
-                        current_row["ICF_SCS_FG_T_1"]
-                    ),  # SRDD는 출구온도 사용
-                    current_target=float(current_row["ICF_TMS_NOX_A"]),
-                    p_feasible=opt_cfg.p_feasible,
-                    n_candidates=opt_cfg.n_candidates,
-                    round_to_int=opt_cfg.round_to_int,
-                )
-
-                # DataFrame에 결과 저장
-                mask = agg_with_recommendations["_time_gateway"] == t
-                agg_with_recommendations.loc[mask, cc.col_pred_mean] = recommendation[
-                    cc.col_pred_mean
-                ]
-                agg_with_recommendations.loc[mask, cc.col_pred_ucb] = recommendation[
-                    cc.col_pred_ucb
-                ]
-                agg_with_recommendations.loc[mask, cc.col_hz_out] = recommendation[
-                    cc.col_hz_out
-                ]
-                agg_with_recommendations.loc[mask, cc.col_safety_gap] = recommendation[
-                    cc.col_safety_gap
-                ]
-
-                # PumpOptimizer의 규칙 후처리 적용
-                df_single = pd.DataFrame(
-                    [
-                        {
-                            cc.col_datetime: t,
-                            cc.col_o2: float(current_row["BR1_EO_O2_A"]),
-                            cc.col_temp: float(
-                                current_row["ICF_SCS_FG_T_1"]
-                            ),  # SRDD는 출구온도
-                            cc.col_inner_temp: float(current_row["ICF_CCS_FG_T_1"]),
-                            cc.col_outer_temp: float(current_row["ICF_SCS_FG_T_1"]),
-                            cc.col_nox: float(current_row["ICF_TMS_NOX_A"]),
-                            cc.col_hz_raw_out: recommendation[cc.col_hz_out],
-                        }
-                    ]
-                )
-
-                # 규칙 후처리 적용
-                df_with_rules = pump_optimizer.add_rule_columns(df_single)
-
-                # 4개 Hz 컬럼 모두 저장
-                agg_with_recommendations.loc[mask, cc.col_hz_raw_out] = df_with_rules[
-                    cc.col_hz_raw_out
-                ].iloc[0]
-                agg_with_recommendations.loc[mask, cc.col_hz_init_rule] = df_with_rules[
-                    cc.col_hz_init_rule
-                ].iloc[0]
-                agg_with_recommendations.loc[mask, cc.col_hz_full_rule] = df_with_rules[
-                    cc.col_hz_full_rule
-                ].iloc[0]
-
-                if i < 5:  # 처음 5개만 상세 출력
-                    selected_hz = df_with_rules[cc.col_hz_raw_out].iloc[0]
-                    selected_nox_mean = recommendation[cc.col_pred_mean]
-                    selected_nox_ucb = recommendation[cc.col_pred_ucb]
-                    safety_gap = recommendation[cc.col_safety_gap]
-                    print(f"   🎛️ Hz 추천 (GP): {selected_hz:.1f} Hz")
-                    print(
-                        f"   📈 예측 NOx: {selected_nox_mean:.3f} (UCB: {selected_nox_ucb:.3f})"
-                    )
-                    print(f"   🛡️ 안전 여유: {safety_gap:.3f}")
-
-            except Exception as e:
-                if i < 5:  # 처음 5개만 상세 출력
-                    print(f"   ❌ Hz 추천 실패: {e}")
-                # fallback Hz 사용
-                fallback_hz = 43.0
-                mask = agg_with_recommendations["_time_gateway"] == t
-                agg_with_recommendations.loc[mask, cc.col_hz_out] = fallback_hz
-
-        print(f"\n✅ GP 모델 예측 완료: {len(valid_times)}개 시점")
-
-        # 8) LGBM 모델 예측 및 Hz 조정
-        print("\n🧠 LGBM 모델 예측 및 Hz 조정 시작...")
-
-        # LGBM 전처리: 요약통계량 Feature 생성
-        df_mapped = agg_with_recommendations.copy()
-        column_mapping = {
-            "BR1_EO_O2_A": "br1_eo_o2_a",
-            "ICF_CCS_FG_T_1": "icf_ccs_fg_t_1",
-            "ICF_SCS_FG_T_1": "icf_scs_fg_t_1",
-            "ICF_TMS_NOX_A": "icf_tms_nox_a",
-        }
-        for influx_col, config_col in column_mapping.items():
-            if influx_col in df_mapped.columns:
-                df_mapped[config_col] = df_mapped[influx_col]
-
-        # LGBM 전처리 (매핑된 DataFrame 사용)
-        lgbm_suggested_df, lgbm_cols_x_stat = lgbm_preprocessor.make_interval_features(
-            df_mapped
-        )
-
-        # LGBM 모델 설정 업데이트
-        lgbm_cols_x_original = cc.lgbm_feature_columns
-        lgbm_cfg.lgbm_feature_columns_original = list(lgbm_cols_x_original)
-        lgbm_cfg.lgbm_feature_columns_summary = list(lgbm_cols_x_stat)
-        lgbm_cfg.native_model_path = lgbm_model_path
-
-        # LGBM 모델 예측 및 Hz 조정
-        lgbm_suggested_df = lgbm_adjuster.predict_and_adjust(
-            lgbm_suggested_df, return_flags=True
-        )
-
-        # LGBM 결과를 원본 DataFrame에 병합
-        lgbm_result_cols = [cc.col_lgbm_db_pred_nox, cc.col_lgbm_db_hz_lgbm_adj]
-        for col in lgbm_result_cols:
-            if col in lgbm_suggested_df.columns:
-                agg_with_recommendations[col] = lgbm_suggested_df[col].values
-
-        # col_hz_final 설정 (LGBM 결과 사용)
-        agg_with_recommendations[cc.col_hz_final] = agg_with_recommendations[
-            cc.col_lgbm_db_hz_lgbm_adj
-        ]
-
-        print("✅ LGBM 모델 예측 및 Hz 조정 완료")
-
-        # 최종 결과 출력 (처음 10개 행만)
-        print("\n📊 최종 추천 결과 (처음 10개 행):")
-        result_cols = [
-            "_time_gateway",
-            cc.col_pred_mean,  # pred_nox_mean
-            cc.col_pred_ucb,  # pred_nox_ucb
-            cc.col_hz_raw_out,  # act_snr_pmp_bo_1 (GP 결과)
-            cc.col_hz_init_rule,  # act_snr_pmp_bo_2 (O2 규칙 적용)
-            cc.col_hz_full_rule,  # act_snr_pmp_bo_3 (O2 + 동적 규칙)
-            cc.col_safety_gap,  # safety_gap_to_target
-        ]
-
-        # LGBM 컬럼 추가
-        if cc.col_lgbm_db_pred_nox in agg_with_recommendations.columns:
-            result_cols.append(cc.col_lgbm_db_pred_nox)  # snr_nox_pred (LGBM 예측 NOx)
-        if cc.col_lgbm_db_hz_lgbm_adj in agg_with_recommendations.columns:
-            result_cols.append(
-                cc.col_lgbm_db_hz_lgbm_adj
-            )  # act_snr_pmp_bo_4 (LGBM 조정 Hz)
-
-        # col_hz_final 추가 (최종 Hz 추천 값 - LGBM 반영된 결과)
-        if cc.col_hz_final in agg_with_recommendations.columns:
-            result_cols.append(cc.col_hz_final)  # act_snr_pmp_bo_0 (최종 추천 Hz)
-
-        available_cols = [
-            c for c in result_cols if c in agg_with_recommendations.columns
-        ]
-        print(agg_with_recommendations[available_cols].head(10))
-
-    else:
-        print("⚠️ 예측 가능한(결측 없는) 5초 구간이 없습니다.")
-
-    # 결측으로 제외된 구간은 NaN으로 표시
-    for t in invalid_times:
-        print(f"⚪ {t} → NOx mean=NaN (insufficient data)")
+    if missing_data > 0:
+        print("   - 결측치가 있는 행들:")
+        missing_rows = agg[agg.isnull().any(axis=1)]
+        for idx, row in missing_rows.head(3).iterrows():
+            print(
+                f"     행 {idx}: {row['_time_gateway']} - {row.isnull().sum()}개 결측치"
+            )
 
     print("\n📌 요약")
-    print("- RUN_ID:", run_id)
-    print("- GP 모델 경로:", model_file)
-    print("- LGBM 모델 경로:", lgbm_model_path)
-    print("- 입력 요약 행 수:", len(agg))
-    print("- GP 모델 예측 완료: PumpOptimizer 활용")
-    print("- LGBM 모델 예측 완료: Hz 조정 반영")
+    print("- 플랜트 코드:", cc.plant_code)
+    print("- 원본 데이터 행 수:", len(df))
+    print("- 5초 윈도우 요약 행 수:", len(agg))
+    print("- 데이터 품질 확인 완료")
+    print("- 모델 추론: 주석처리됨 (모델 미준비)")
+    print("✅ SRDD 실시간 데이터 조회 및 5초 윈도우 요약 테스트 완료!")
 
 
 if __name__ == "__main__":
