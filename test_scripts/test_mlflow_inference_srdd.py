@@ -454,14 +454,44 @@ def main() -> None:
     print(f"📈 원본 데이터: {len(df)}행")
     print(f"📅 시간 범위: {df['time'].min()} ~ {df['time'].max()}")
 
+    # 원본 데이터 시간 간격 검증
+    print("\n🔍 원본 데이터 시간 간격 검증:")
+    df_sorted = df.sort_values("time")
+    time_diffs = df_sorted["time"].diff().dropna()
+    print(f"   - 평균 시간 간격: {time_diffs.mean()}")
+    print(f"   - 최소 시간 간격: {time_diffs.min()}")
+    print(f"   - 최대 시간 간격: {time_diffs.max()}")
+    print(f"   - 시간 간격 분포: {time_diffs.value_counts().head()}")
+
     # 5) 5초 윈도우 요약(최근 10분 → 120행) - SRS1과 동일한 로직 사용
-    print("🔄 5초 윈도우 요약 처리 중...")
+    print("\n🔄 5초 윈도우 요약 처리 중...")
     agg = aggregate_10min_to_5s(df, preprocessor, cc)
     print("🧾 5초 윈도우 요약 완료:", agg.shape)
-    print("📊 요약된 데이터 (처음 5개 행):")
-    print(agg.head())
-    print("📊 요약된 데이터 (마지막 5개 행):")
-    print(agg.tail())
+
+    # 5초 윈도우 검증
+    print("\n🔍 5초 윈도우 검증:")
+    agg_sorted = agg.sort_values("_time_gateway")
+    window_diffs = agg_sorted["_time_gateway"].diff().dropna()
+    print(f"   - 예상 행 수: 120개 (10분 ÷ 5초)")
+    print(f"   - 실제 행 수: {len(agg)}개")
+    print(f"   - 평균 윈도우 간격: {window_diffs.mean()}")
+    print(
+        f"   - 윈도우 간격이 5초인지 확인: {all(window_diffs == pd.Timedelta(seconds=5))}"
+    )
+
+    print("\n📊 요약된 데이터 (처음 10개 행):")
+    print(agg.head(10))
+    print("\n📊 요약된 데이터 (마지막 10개 행):")
+    print(agg.tail(10))
+
+    # 시간 범위 검증
+    print(f"\n📅 시간 범위 검증:")
+    print(f"   - 시작: {agg['_time_gateway'].min()}")
+    print(f"   - 끝: {agg['_time_gateway'].max()}")
+    print(
+        f"   - 총 기간: {(agg['_time_gateway'].max() - agg['_time_gateway'].min()).total_seconds()}초"
+    )
+    print(f"   - 예상 기간: 595초 (10분 - 5초)")
 
     # 6) 데이터 품질 확인
     print("\n📊 데이터 품질 확인:")
