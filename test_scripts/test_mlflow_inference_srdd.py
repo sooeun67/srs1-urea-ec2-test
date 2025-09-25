@@ -457,7 +457,9 @@ def main() -> None:
     # 원본 데이터 시간 간격 검증
     print("\n🔍 원본 데이터 시간 간격 검증:")
     df_sorted = df.sort_values("time")
-    time_diffs = df_sorted["time"].diff().dropna()
+    # time 컬럼을 datetime으로 변환
+    df_sorted["time_dt"] = pd.to_datetime(df_sorted["time"], utc=True)
+    time_diffs = df_sorted["time_dt"].diff().dropna()
     print(f"   - 평균 시간 간격: {time_diffs.mean()}")
     print(f"   - 최소 시간 간격: {time_diffs.min()}")
     print(f"   - 최대 시간 간격: {time_diffs.max()}")
