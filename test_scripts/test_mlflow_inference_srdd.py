@@ -365,9 +365,11 @@ def query_recent_influx() -> pd.DataFrame:
         if c in df.columns
     ]
     try:
-        print("🔍 원본 InfluxDB 데이터 (처음 5개 행):")
-        print(df[preview_cols].head(5) if preview_cols else df.head(5))
-        print("🔍 원본 InfluxDB 데이터 통계:")
+        print("🔍 원본 InfluxDB 데이터 (처음 20개 행):")
+        print(df[preview_cols].head(20) if preview_cols else df.head(20))
+        print("\n🔍 원본 InfluxDB 데이터 (마지막 20개 행):")
+        print(df[preview_cols].tail(20) if preview_cols else df.tail(20))
+        print("\n🔍 원본 InfluxDB 데이터 통계:")
         if preview_cols:
             print(df[preview_cols].describe())
         else:
