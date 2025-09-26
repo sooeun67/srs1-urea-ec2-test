@@ -260,6 +260,58 @@ def setup_preprocessing_config() -> tuple[
     )
 
 
+def query_all_columns() -> List[str]:
+    """SRDD InfluxDB에서 모든 컬럼 조회"""
+    from influxdb import InfluxDBClient
+
+    host = os.environ.get("INFLUX_HOST", "10.238.24.150")
+    port = int(os.environ.get("INFLUX_PORT", "8086"))
+    username = os.environ.get("INFLUX_USERNAME", "read_user")
+    password = os.environ.get("INFLUX_PASSWORD", "!Skepinfluxuser25")
+    database = os.environ.get("INFLUX_DB", "SRDD")
+    measurement = os.environ.get("INFLUX_MEASUREMENT", "SRDD")
+
+    client = InfluxDBClient(
+        host=host,
+        port=port,
+        username=username,
+        password=password,
+        database=database,
+        timeout=30,
+    )
+
+    # 모든 컬럼 조회를 위한 쿼리 (최근 1개 행만)
+    query = f'SELECT * FROM "{measurement}" ORDER BY time DESC LIMIT 1'
+    print(f"🔎 컬럼 조회 쿼리: {query}")
+
+    result = client.query(query)
+    points = list(result.get_points()) if result else []
+
+    if not points:
+        print("❌ 데이터를 조회할 수 없습니다.")
+        return []
+
+    # 첫 번째 행의 모든 키를 컬럼으로 사용
+    columns = list(points[0].keys())
+    print(f"📊 조회된 컬럼 수: {len(columns)}")
+
+    return columns
+
+
+def display_columns_with_numbers(columns: List[str]) -> None:
+    """컬럼 목록을 숫자로 태그해서 출력"""
+    print("\n" + "=" * 60)
+    print("📋 SRDD InfluxDB 테이블의 모든 컬럼 목록")
+    print("=" * 60)
+
+    for i, col in enumerate(columns, 1):
+        print(f"{i:3d}. {col}")
+
+    print("=" * 60)
+    print(f"총 {len(columns)}개 컬럼이 조회되었습니다.")
+    print("=" * 60)
+
+
 def query_recent_influx() -> pd.DataFrame:
     """SRDD InfluxDB에서 최근 데이터 조회"""
     from influxdb import InfluxDBClient
@@ -402,25 +454,14 @@ def main() -> None:
         lgbm_adjuster,
     ) = setup_preprocessing_config()
     print(f"✅ 전처리 설정 초기화 완료: {cc.plant_code}")
-    # print(f"✅ GP 모델 초기화 완료: {gp_model.model_config.plant_code}")
-    # print(f"ℹ️ LGBM 모델 초기화 완료: {lgbm_model.model_config.__class__.__name__} (비활성화)")
-    # print(f"✅ PumpOptimizer 초기화 완료")
-    # print(f"ℹ️ LGBM Adjuster 초기화 완료 (비활성화)")
 
-    # tracking_uri = os.environ.get("MLFLOW_TRACKING_URI")
-    # if tracking_uri:
-    #     print(f"🔗 MLFLOW_TRACKING_URI: {tracking_uri}")
-    # else:
-    #     print(
-    #         "⚠️ MLFLOW_TRACKING_URI가 설정되지 않았습니다. mlflow 기본 설정을 사용합니다."
-    #     )
-
-    # # 1) RUN 선택 (주석처리 - 모델 미준비)
-    # if tracking_uri:
-    #     import mlflow
-    #     mlflow.set_tracking_uri(tracking_uri)
-    # run_id = os.environ.get("RUN_ID", "8df2907f144a4dcd80fe0d834be77f65")
-    # print(f"🏷️ 사용 RUN_ID: {run_id}")
+    # 1) SRDD InfluxDB의 모든 컬럼 조회 및 출력
+    print("\n🔍 SRDD InfluxDB 테이블의 모든 컬럼 조회 중...")
+    all_columns = query_all_columns()
+    if all_columns:
+        display_columns_with_numbers(all_columns)
+    else:
+        print("❌ 컬럼 조회에 실패했습니다.")
 
     # 2) GP 모델 로드 (주석처리 - 모델 미준비)
     # model_file = f"mlflow_artifacts/{run_id}/urea_gp_model/gp_model.joblib"
