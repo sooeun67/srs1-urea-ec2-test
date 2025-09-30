@@ -243,6 +243,10 @@ def main():
             "NOX_Value",
             "SNR_EQ_UW_F_1",
             "ACT_SNR_PMP_UW_S",
+            # (EDIT; 2025-09-30) 요소수, 희석수 유량 관련 column 추가
+            "SNR_EQ_UW_F_1", FT_112; 요소수 공급 유량 A (FT112 UREA 유량)
+            "SNR_EQ_DW_F_1", FIT_115_PV; 희석수 공급 유량 A (SNCR 공정수 유량계)
+            "SNR_EQ_UW_F_2", FIT_117_PV; 요소수 공급 유량 B (SNCR 혼합수 유량계)
         ]
     else:
         columns = args.columns
