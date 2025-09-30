@@ -137,8 +137,8 @@ def export_influx_data(
         print(f"\n🔄 GitHub을 통한 데이터 전송 방법:")
         print(f"   1. git add {output_path.name}")
         print(f"   2. git commit -m 'Add exported data: {output_path.name}'")
-        print(f"   3. git push origin main")
-        print(f"   4. 로컬에서 git pull origin main 후 {output_path.name} 사용")
+        print(f"   3. git push origin moon")
+        print(f"   4. 로컬에서 git pull origin moon 후 {output_path.name} 사용")
 
         # 파일 크기 확인
         file_size_mb = output_path.stat().st_size / (1024 * 1024)
