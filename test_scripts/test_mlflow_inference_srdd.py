@@ -264,7 +264,7 @@ def query_all_columns() -> List[str]:
     """SRDD InfluxDB에서 모든 컬럼 조회"""
     from influxdb import InfluxDBClient
 
-    host = os.environ.get("INFLUX_HOST", "10.238.24.150")
+    host = os.environ.get("INFLUX_HOST", "10.238.27.132")  # 운영
     port = int(os.environ.get("INFLUX_PORT", "8086"))
     username = os.environ.get("INFLUX_USERNAME", "read_user")
     password = os.environ.get("INFLUX_PASSWORD", "!Skepinfluxuser25")
@@ -316,7 +316,7 @@ def query_recent_influx() -> pd.DataFrame:
     """SRDD InfluxDB에서 최근 데이터 조회"""
     from influxdb import InfluxDBClient
 
-    host = os.environ.get("INFLUX_HOST", "10.238.24.150")
+    host = os.environ.get("INFLUX_HOST", "10.238.27.132")  # 운영
     port = int(os.environ.get("INFLUX_PORT", "8086"))
     username = os.environ.get("INFLUX_USERNAME", "read_user")
     password = os.environ.get("INFLUX_PASSWORD", "!Skepinfluxuser25")
