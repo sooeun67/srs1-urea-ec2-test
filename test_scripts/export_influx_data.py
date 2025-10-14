@@ -24,7 +24,8 @@ def export_influx_data(
     hours=1,
     output_file=None,
     measurement="SRS1",
-    host="10.238.27.132", # 운영
+    #host="10.238.27.132", # 운영
+    host="10.238.24.150", # 개발 
     port=8086,
     username="read_user",
     password="!Skepinfluxuser25",
