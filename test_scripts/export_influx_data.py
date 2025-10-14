@@ -247,6 +247,8 @@ def main():
             "SNR_EQ_UW_F_1", # FT_112; 요소수 공급 유량 A (FT112 UREA 유량)
             "SNR_EQ_DW_F_1", # FIT_115_PV; 희석수 공급 유량 A (SNCR 공정수 유량계)
             "SNR_EQ_UW_F_2", # FIT_117_PV; 요소수 공급 유량 B (SNCR 혼합수 유량계)
+            # (EDIT; 2025-10-14) 소각로 상태 column 추가
+            "INCINERATORSTATUS"
         ]
     else:
         columns = args.columns
