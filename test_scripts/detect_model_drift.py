@@ -29,7 +29,7 @@ import pandas as pd
 
 baseline_urea_flow_rate = 63.73
 
-# column명 정의
+# DB에서 read할 input column 목록
 col_datetime = '_time_gateway'
 col_inc_status = 'IncineratorStatus'
 col_nox_eq_status = 'NOX_EQ_Status'
@@ -40,6 +40,10 @@ col_urea_flow = 'SNR_EQ_UW_F_1'
 
 
 cols_select = [col_datetime, col_inc_status, col_nox_eq_status, col_nox, col_lgbm_db_pred_nox, col_urea_pump, col_urea_flow]
+
+# DB에 update할 output column 목록
+col_urea_saving_rate = 'UREA_SAVING_RATE'
+col_snr_nox_mae = 'SNR_NOX_MAE'
 
 
 
