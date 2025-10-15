@@ -21,7 +21,7 @@ from influxdb import InfluxDBClient
 
 
 def export_bhi_data(
-    hours=480,  # 기본 20일 (BHI는 하루 1번 계산 -> 20개 유효값)
+    hours=720,  # 기본 30일 (BHI는 하루 1번 계산 -> 30개 유효값)
     output_file=None,
     measurement="SRS1",
     host="10.238.24.150",  # 개발기
@@ -34,7 +34,7 @@ def export_bhi_data(
     BFT-BHI 데이터를 InfluxDB에서 CSV로 내보내기
 
     Args:
-        hours: 조회할 시간 범위 (시간 단위, 기본 480시간=20일)
+        hours: 조회할 시간 범위 (시간 단위, 기본 720시간=30일)
         output_file: 출력 파일명 (None이면 자동 생성)
         measurement: 측정값명
         host, port, username, password, database: InfluxDB 연결 정보
@@ -42,7 +42,7 @@ def export_bhi_data(
     Note:
         - BFT_BHI_VALUE는 하루 1번 계산됨
         - NULL 행은 자동 필터링하여 유효값만 저장
-        - 20일 조회 시 약 20개의 유효 BHI 값 추출
+        - 30일 조회 시 약 30개의 유효 BHI 값 추출
     """
 
     # BFT-BHI 관련 컬럼
@@ -195,8 +195,8 @@ def main():
     parser.add_argument(
         "--hours",
         type=float,
-        default=480,
-        help="조회할 시간 범위 (기본: 480시간=20일, BHI는 하루 1번 계산)",
+        default=720,
+        help="조회할 시간 범위 (기본: 720시간=30일, BHI는 하루 1번 계산)",
     )
     parser.add_argument("--output", "-o", help="출력 파일명 (기본: 자동 생성)")
     parser.add_argument(
