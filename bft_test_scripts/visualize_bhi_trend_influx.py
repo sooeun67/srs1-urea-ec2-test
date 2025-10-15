@@ -81,21 +81,22 @@ def query_bhi_data(client, start_date=None, end_date=None):
     print("\n🔍 InfluxDB에서 BHI 데이터 조회 중 (BFT_BHI_VALUE가 있는 행만)...")
 
     # 쿼리 작성 (BFT_BHI_VALUE가 존재하는 행만 조회 - InfluxDB 문법)
+    # InfluxDB는 ORDER BY time만 지원하므로 time 기준으로 정렬
     if start_date:
         query = f"""
         SELECT _time_gateway, BFT_BHI_CODE, BFT_BHI_DATAQUALITY, BFT_BHI_DATASTATUS, BFT_BHI_VALUE
         FROM "{INFLUX_MEASUREMENT}"
-        WHERE _time_gateway >= '{start_str}' AND _time_gateway <= {end_str}
+        WHERE time >= '{start_str}' AND time <= {end_str}
         AND BFT_BHI_VALUE != ''
-        ORDER BY _time_gateway ASC
+        ORDER BY time ASC
         """
     else:
         query = f"""
         SELECT _time_gateway, BFT_BHI_CODE, BFT_BHI_DATAQUALITY, BFT_BHI_DATASTATUS, BFT_BHI_VALUE
         FROM "{INFLUX_MEASUREMENT}"
-        WHERE _time_gateway >= {start_str} AND _time_gateway <= {end_str}
+        WHERE time >= {start_str} AND time <= {end_str}
         AND BFT_BHI_VALUE != ''
-        ORDER BY _time_gateway ASC
+        ORDER BY time ASC
         """
 
     print(f"📝 쿼리:")
