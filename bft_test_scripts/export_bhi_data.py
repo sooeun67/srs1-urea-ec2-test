@@ -199,28 +199,58 @@ def export_bhi_data(
         )
         print(f"📊 조회 범위: {hours}시간 ({hours/24:.1f}일)")
 
-        # 쿼리 생성 (BFT-BHI 컬럼만)
+        # 쿼리 생성 (BFT_BHI_VALUE가 유효한 행만 조회)
+        # 분할 쿼리: 하루씩 조회하여 메모리 부족 방지
+        print(f"📌 메모리 효율을 위해 하루씩 분할 조회합니다...")
         columns_str = ", ".join([f'"{col}"' for col in bhi_columns])
-        query = f"""
-        SELECT {columns_str} FROM "{measurement}" 
-        WHERE time >= '{start_utc}' AND time <= '{end_utc}'
-        ORDER BY time ASC
-        """
 
-        print(f"\n🔎 실행 쿼리:")
-        print(query)
-        print()
+        # 하루씩 분할 조회
+        all_dfs = []
+        num_days = int(hours / 24) + 1
 
-        # 데이터 조회
-        print("⏳ 데이터 조회 중...")
-        result = client.query(query)
-        df = pd.DataFrame(list(result.get_points()))
+        for day in range(num_days):
+            day_start = start_time + timedelta(days=day)
+            day_end = min(day_start + timedelta(days=1), now)
 
-        if df.empty:
-            print("❌ 조회된 데이터가 없습니다.")
+            day_start_str = day_start.strftime("%Y-%m-%dT%H:%M:%SZ")
+            day_end_str = day_end.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+            query = f"""
+            SELECT {columns_str} FROM "{measurement}" 
+            WHERE time >= '{day_start_str}' AND time < '{day_end_str}'
+            ORDER BY time ASC
+            """
+
+            print(
+                f"   Day {day+1}/{num_days}: {day_start.strftime('%Y-%m-%d')}...",
+                end=" ",
+            )
+
+            try:
+                result = client.query(query)
+                day_df = pd.DataFrame(list(result.get_points()))
+
+                if not day_df.empty:
+                    all_dfs.append(day_df)
+                    # BHI 값이 있는지 확인
+                    if "BFT_BHI_VALUE" in day_df.columns:
+                        valid_count = day_df["BFT_BHI_VALUE"].notna().sum()
+                        print(f"✅ {len(day_df):,}행 (BHI 유효값: {valid_count}개)")
+                    else:
+                        print(f"✅ {len(day_df):,}행")
+                else:
+                    print("⚠️ 데이터 없음")
+            except Exception as e:
+                print(f"❌ 오류: {e}")
+                continue
+
+        # 모든 데이터 합치기
+        if not all_dfs:
+            print("\n❌ 조회된 데이터가 없습니다.")
             return None
 
-        print(f"✅ 조회 완료: {len(df):,} 행, {len(df.columns)} 컬럼")
+        df = pd.concat(all_dfs, ignore_index=True)
+        print(f"\n✅ 전체 조회 완료: {len(df):,} 행, {len(df.columns)} 컬럼")
 
         # 시간 컬럼 변환
         if "time" in df.columns:
