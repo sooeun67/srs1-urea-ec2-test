@@ -84,14 +84,14 @@ def plot_bhi_trend(df, output_file="bhi_trend.png"):
             fontweight="bold",
         )
 
-    # 그래프 설정
-    ax.set_xlabel("날짜 (UTC)", fontsize=12)
-    ax.set_ylabel("BHI 값 (%)", fontsize=12)
-
+    # 그래프 설정 (영어 라벨 사용)
+    ax.set_xlabel("Date (UTC)", fontsize=12)
+    ax.set_ylabel("BHI Value (%)", fontsize=12)
+    
     date_range = f"{df_valid['_time_gateway'].min().strftime('%Y-%m-%d')} ~ {df_valid['_time_gateway'].max().strftime('%Y-%m-%d')}"
     ax.set_title(
-        f"SRS1 백필터 건강도 지수 (BHI) 트렌드\n"
-        f"기간(UTC): {date_range} ({len(df_valid)}일)",
+        f"SRS1 Bag Filter Health Index (BHI) Trend\n"
+        f"Period (UTC): {date_range} ({len(df_valid)} days)",
         fontsize=14,
         fontweight="bold",
     )
