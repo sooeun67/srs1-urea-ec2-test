@@ -1,0 +1,1372 @@
+
+### Argument values ###
+start_time     : 2025-10-01 00:00:00   (input)
+end_time       : 2025-10-01 12:00:00   (input)
+query_hours    : 12.0   (default)
+influx_host    : 10.238.27.132   (default)
+influx_port    : 8086   (default)
+influx_user    : read_user   (default)
+influx_pass    : !Skepinfluxuser25   (default)
+influx_db      : SRS1   (default)
+measurement    : SRS1   (default)
+
+ InfluxDB 연결: 10.238.27.132:8086/SRS1
+ 실행 쿼리:
+SELECT "_time_gateway", "IncineratorStatus", "NOX_EQ_Status", "ICF_TMS_NOX_A", "SNR_NOX_PRED", "SNR_PMP_UW_S_1", "SNR_EQ_UW_F_1" FROM "SRS1" WHERE time >= '2025-10-01T00:00:00Z' AND time < '2025-10-01T12:00:00Z'
+
+ 조회 완료: 43141 행, 8 컬럼
+ 데이터 시간 범위: 2025-10-01 00:00:00+00:00 ~ 2025-10-01 11:59:59+00:00
+샘플 데이터 출력 (head, tail)
+                       time        _time_gateway  ...  SNR_PMP_UW_S_1  SNR_EQ_UW_F_1
+0 2025-10-01 00:00:00+00:00  2025-10-01 00:00:00  ...       47.043751      43.031250
+1 2025-10-01 00:00:01+00:00  2025-10-01 00:00:01  ...       47.040001      41.540627
+2 2025-10-01 00:00:02+00:00  2025-10-01 00:00:02  ...       47.051251      40.453125
+3 2025-10-01 00:00:03+00:00  2025-10-01 00:00:03  ...       47.055000      39.534374
+4 2025-10-01 00:00:04+00:00  2025-10-01 00:00:04  ...       47.040001      38.868752
+
+[5 rows x 8 columns]
+                           time  ... SNR_EQ_UW_F_1
+43136 2025-10-01 11:59:55+00:00  ...     34.387501
+43137 2025-10-01 11:59:56+00:00  ...     34.387501
+43138 2025-10-01 11:59:57+00:00  ...     34.200001
+43139 2025-10-01 11:59:58+00:00  ...     34.200001
+43140 2025-10-01 11:59:59+00:00  ...     34.021873
+
+[5 rows x 8 columns]
+
+ 필터/정렬/중복처리 후: 39439 행
+
+[METRIC] LGBM 1-min MAE (N=7805): 10.0858
+
+[PUMP] 평균 주파수 (Hz): 44.72 (N=39439)
+[FLOW] 평균 유량: 33.5692 (N=39439)
+[FLOW] 베이스라인 유량(60Hz 기준, 63.73) 대비 절감률: 47.33%
+
+[RESULT] Summary one-row DataFrame:
+          _time_gateway  UREA_SAVING_RATE  SNR_NOX_MAE
+0  2025-10-01T12:00:00Z          0.473259    10.085806
+
+### Argument values ###
+start_time     : 2025-10-01 12:00:00   (input)
+end_time       : 2025-10-02 00:00:00   (input)
+query_hours    : 12.0   (default)
+influx_host    : 10.238.27.132   (default)
+influx_port    : 8086   (default)
+influx_user    : read_user   (default)
+influx_pass    : !Skepinfluxuser25   (default)
+influx_db      : SRS1   (default)
+measurement    : SRS1   (default)
+
+ InfluxDB 연결: 10.238.27.132:8086/SRS1
+ 실행 쿼리:
+SELECT "_time_gateway", "IncineratorStatus", "NOX_EQ_Status", "ICF_TMS_NOX_A", "SNR_NOX_PRED", "SNR_PMP_UW_S_1", "SNR_EQ_UW_F_1" FROM "SRS1" WHERE time >= '2025-10-01T12:00:00Z' AND time < '2025-10-02T00:00:00Z'
+
+ 조회 완료: 43200 행, 8 컬럼
+ 데이터 시간 범위: 2025-10-01 12:00:00+00:00 ~ 2025-10-01 23:59:59+00:00
+샘플 데이터 출력 (head, tail)
+                       time        _time_gateway  ...  SNR_PMP_UW_S_1  SNR_EQ_UW_F_1
+0 2025-10-01 12:00:00+00:00  2025-10-01 12:00:00  ...       44.880001      34.021873
+1 2025-10-01 12:00:01+00:00  2025-10-01 12:00:01  ...       44.891251      34.012501
+2 2025-10-01 12:00:02+00:00  2025-10-01 12:00:02  ...       44.891251      34.021873
+3 2025-10-01 12:00:03+00:00  2025-10-01 12:00:03  ...       44.891251      34.021873
+4 2025-10-01 12:00:04+00:00  2025-10-01 12:00:04  ...       44.887501      34.021873
+
+[5 rows x 8 columns]
+                           time  ... SNR_EQ_UW_F_1
+43195 2025-10-01 23:59:55+00:00  ...     52.303123
+43196 2025-10-01 23:59:56+00:00  ...     52.293751
+43197 2025-10-01 23:59:57+00:00  ...     52.303123
+43198 2025-10-01 23:59:58+00:00  ...     52.303123
+43199 2025-10-01 23:59:59+00:00  ...     52.293751
+
+[5 rows x 8 columns]
+
+ 필터/정렬/중복처리 후: 41518 행
+
+[METRIC] LGBM 1-min MAE (N=8257): 3.0952
+
+[PUMP] 평균 주파수 (Hz): 44.84 (N=41518)
+[FLOW] 평균 유량: 33.7648 (N=41518)
+[FLOW] 베이스라인 유량(60Hz 기준, 63.73) 대비 절감률: 47.02%
+
+[RESULT] Summary one-row DataFrame:
+          _time_gateway  UREA_SAVING_RATE  SNR_NOX_MAE
+0  2025-10-02T00:00:00Z           0.47019     3.095205
+
+### Argument values ###
+start_time     : 2025-10-02 00:00:00   (input)
+end_time       : 2025-10-02 12:00:00   (input)
+query_hours    : 12.0   (default)
+influx_host    : 10.238.27.132   (default)
+influx_port    : 8086   (default)
+influx_user    : read_user   (default)
+influx_pass    : !Skepinfluxuser25   (default)
+influx_db      : SRS1   (default)
+measurement    : SRS1   (default)
+
+ InfluxDB 연결: 10.238.27.132:8086/SRS1
+ 실행 쿼리:
+SELECT "_time_gateway", "IncineratorStatus", "NOX_EQ_Status", "ICF_TMS_NOX_A", "SNR_NOX_PRED", "SNR_PMP_UW_S_1", "SNR_EQ_UW_F_1" FROM "SRS1" WHERE time >= '2025-10-02T00:00:00Z' AND time < '2025-10-02T12:00:00Z'
+
+ 조회 완료: 43192 행, 8 컬럼
+ 데이터 시간 범위: 2025-10-02 00:00:00+00:00 ~ 2025-10-02 11:59:59+00:00
+샘플 데이터 출력 (head, tail)
+                       time        _time_gateway  ...  SNR_PMP_UW_S_1  SNR_EQ_UW_F_1
+0 2025-10-02 00:00:00+00:00  2025-10-02 00:00:00  ...       55.439999      52.293751
+1 2025-10-02 00:00:01+00:00  2025-10-02 00:00:01  ...       55.481251      52.303123
+2 2025-10-02 00:00:02+00:00  2025-10-02 00:00:02  ...       55.458752      52.303123
+3 2025-10-02 00:00:03+00:00  2025-10-02 00:00:03  ...       55.451248      52.303123
+4 2025-10-02 00:00:04+00:00  2025-10-02 00:00:04  ...       55.443748      52.293751
+
+[5 rows x 8 columns]
+                           time  ... SNR_EQ_UW_F_1
+43187 2025-10-02 11:59:55+00:00  ...     52.293751
+43188 2025-10-02 11:59:56+00:00  ...     52.303123
+43189 2025-10-02 11:59:57+00:00  ...     52.293751
+43190 2025-10-02 11:59:58+00:00  ...     52.293751
+43191 2025-10-02 11:59:59+00:00  ...     52.303123
+
+[5 rows x 8 columns]
+
+ 필터/정렬/중복처리 후: 42059 행
+
+[METRIC] LGBM 1-min MAE (N=8370): 4.9591
+
+[PUMP] 평균 주파수 (Hz): 44.91 (N=42059)
+[FLOW] 평균 유량: 33.8358 (N=42059)
+[FLOW] 베이스라인 유량(60Hz 기준, 63.73) 대비 절감률: 46.91%
+
+[RESULT] Summary one-row DataFrame:
+          _time_gateway  UREA_SAVING_RATE  SNR_NOX_MAE
+0  2025-10-02T12:00:00Z          0.469075     4.959127
+
+### Argument values ###
+start_time     : 2025-10-02 12:00:00   (input)
+end_time       : 2025-10-03 00:00:00   (input)
+query_hours    : 12.0   (default)
+influx_host    : 10.238.27.132   (default)
+influx_port    : 8086   (default)
+influx_user    : read_user   (default)
+influx_pass    : !Skepinfluxuser25   (default)
+influx_db      : SRS1   (default)
+measurement    : SRS1   (default)
+
+ InfluxDB 연결: 10.238.27.132:8086/SRS1
+ 실행 쿼리:
+SELECT "_time_gateway", "IncineratorStatus", "NOX_EQ_Status", "ICF_TMS_NOX_A", "SNR_NOX_PRED", "SNR_PMP_UW_S_1", "SNR_EQ_UW_F_1" FROM "SRS1" WHERE time >= '2025-10-02T12:00:00Z' AND time < '2025-10-03T00:00:00Z'
+
+ 조회 완료: 43200 행, 8 컬럼
+ 데이터 시간 범위: 2025-10-02 12:00:00+00:00 ~ 2025-10-02 23:59:59+00:00
+샘플 데이터 출력 (head, tail)
+                       time        _time_gateway  ...  SNR_PMP_UW_S_1  SNR_EQ_UW_F_1
+0 2025-10-02 12:00:00+00:00  2025-10-02 12:00:00  ...       55.338749      52.303123
+1 2025-10-02 12:00:01+00:00  2025-10-02 12:00:01  ...       55.323749      52.293751
+2 2025-10-02 12:00:02+00:00  2025-10-02 12:00:02  ...       55.323749      52.303123
+3 2025-10-02 12:00:03+00:00  2025-10-02 12:00:03  ...       55.312500      52.303123
+4 2025-10-02 12:00:04+00:00  2025-10-02 12:00:04  ...       55.346249      52.171875
+
+[5 rows x 8 columns]
+                           time  ... SNR_EQ_UW_F_1
+43195 2025-10-02 23:59:55+00:00  ...     43.349998
+43196 2025-10-02 23:59:56+00:00  ...     43.303123
+43197 2025-10-02 23:59:57+00:00  ...     43.162498
+43198 2025-10-02 23:59:58+00:00  ...     43.162498
+43199 2025-10-02 23:59:59+00:00  ...     43.162498
+
+[5 rows x 8 columns]
+
+ 필터/정렬/중복처리 후: 41516 행
+
+[METRIC] LGBM 1-min MAE (N=8253): 3.7851
+
+[PUMP] 평균 주파수 (Hz): 45.57 (N=41516)
+[FLOW] 평균 유량: 34.9829 (N=41516)
+[FLOW] 베이스라인 유량(60Hz 기준, 63.73) 대비 절감률: 45.11%
+
+[RESULT] Summary one-row DataFrame:
+          _time_gateway  UREA_SAVING_RATE  SNR_NOX_MAE
+0  2025-10-03T00:00:00Z          0.451076     3.785093
+
+### Argument values ###
+start_time     : 2025-10-03 00:00:00   (input)
+end_time       : 2025-10-03 12:00:00   (input)
+query_hours    : 12.0   (default)
+influx_host    : 10.238.27.132   (default)
+influx_port    : 8086   (default)
+influx_user    : read_user   (default)
+influx_pass    : !Skepinfluxuser25   (default)
+influx_db      : SRS1   (default)
+measurement    : SRS1   (default)
+
+ InfluxDB 연결: 10.238.27.132:8086/SRS1
+ 실행 쿼리:
+SELECT "_time_gateway", "IncineratorStatus", "NOX_EQ_Status", "ICF_TMS_NOX_A", "SNR_NOX_PRED", "SNR_PMP_UW_S_1", "SNR_EQ_UW_F_1" FROM "SRS1" WHERE time >= '2025-10-03T00:00:00Z' AND time < '2025-10-03T12:00:00Z'
+
+ 조회 완료: 43200 행, 8 컬럼
+ 데이터 시간 범위: 2025-10-03 00:00:00+00:00 ~ 2025-10-03 11:59:59+00:00
+샘플 데이터 출력 (head, tail)
+                       time        _time_gateway  ...  SNR_PMP_UW_S_1  SNR_EQ_UW_F_1
+0 2025-10-03 00:00:00+00:00  2025-10-03 00:00:00  ...       50.186249      43.162498
+1 2025-10-03 00:00:01+00:00  2025-10-03 00:00:01  ...       50.167499      43.162498
+2 2025-10-03 00:00:02+00:00  2025-10-03 00:00:02  ...       50.167499      43.162498
+3 2025-10-03 00:00:03+00:00  2025-10-03 00:00:03  ...       50.167499      43.181252
+4 2025-10-03 00:00:04+00:00  2025-10-03 00:00:04  ...       50.220001      43.340626
+
+[5 rows x 8 columns]
+                           time  ... SNR_EQ_UW_F_1
+43195 2025-10-03 11:59:55+00:00  ...     33.646873
+43196 2025-10-03 11:59:56+00:00  ...     33.646873
+43197 2025-10-03 11:59:57+00:00  ...     33.646873
+43198 2025-10-03 11:59:58+00:00  ...     33.646873
+43199 2025-10-03 11:59:59+00:00  ...     33.393749
+
+[5 rows x 8 columns]
+
+ 필터/정렬/중복처리 후: 41533 행
+
+[METRIC] LGBM 1-min MAE (N=8255): 3.0195
+
+[PUMP] 평균 주파수 (Hz): 44.32 (N=41533)
+[FLOW] 평균 유량: 33.6438 (N=41533)
+[FLOW] 베이스라인 유량(60Hz 기준, 63.73) 대비 절감률: 47.21%
+
+[RESULT] Summary one-row DataFrame:
+          _time_gateway  UREA_SAVING_RATE  SNR_NOX_MAE
+0  2025-10-03T12:00:00Z          0.472089     3.019512
+
+### Argument values ###
+start_time     : 2025-10-03 12:00:00   (input)
+end_time       : 2025-10-04 00:00:00   (input)
+query_hours    : 12.0   (default)
+influx_host    : 10.238.27.132   (default)
+influx_port    : 8086   (default)
+influx_user    : read_user   (default)
+influx_pass    : !Skepinfluxuser25   (default)
+influx_db      : SRS1   (default)
+measurement    : SRS1   (default)
+
+ InfluxDB 연결: 10.238.27.132:8086/SRS1
+ 실행 쿼리:
+SELECT "_time_gateway", "IncineratorStatus", "NOX_EQ_Status", "ICF_TMS_NOX_A", "SNR_NOX_PRED", "SNR_PMP_UW_S_1", "SNR_EQ_UW_F_1" FROM "SRS1" WHERE time >= '2025-10-03T12:00:00Z' AND time < '2025-10-04T00:00:00Z'
+
+ 조회 완료: 43200 행, 8 컬럼
+ 데이터 시간 범위: 2025-10-03 12:00:00+00:00 ~ 2025-10-03 23:59:59+00:00
+샘플 데이터 출력 (head, tail)
+                       time        _time_gateway  ...  SNR_PMP_UW_S_1  SNR_EQ_UW_F_1
+0 2025-10-03 12:00:00+00:00  2025-10-03 12:00:00  ...       42.851250      32.990623
+1 2025-10-03 12:00:01+00:00  2025-10-03 12:00:01  ...       42.866249      32.878124
+2 2025-10-03 12:00:02+00:00  2025-10-03 12:00:02  ...       42.866249      32.418751
+3 2025-10-03 12:00:03+00:00  2025-10-03 12:00:03  ...       42.851250      32.137501
+4 2025-10-03 12:00:04+00:00  2025-10-03 12:00:04  ...       42.862499      31.968750
+
+[5 rows x 8 columns]
+                           time  ... SNR_EQ_UW_F_1
+43195 2025-10-03 23:59:55+00:00  ...     40.724998
+43196 2025-10-03 23:59:56+00:00  ...     40.724998
+43197 2025-10-03 23:59:57+00:00  ...     40.734375
+43198 2025-10-03 23:59:58+00:00  ...     40.724998
+43199 2025-10-03 23:59:59+00:00  ...     40.640625
+
+[5 rows x 8 columns]
+
+ 필터/정렬/중복처리 후: 41525 행
+
+[METRIC] LGBM 1-min MAE (N=8258): 5.0892
+
+[PUMP] 평균 주파수 (Hz): 44.56 (N=41525)
+[FLOW] 평균 유량: 34.4051 (N=41525)
+[FLOW] 베이스라인 유량(60Hz 기준, 63.73) 대비 절감률: 46.01%
+
+[RESULT] Summary one-row DataFrame:
+          _time_gateway  UREA_SAVING_RATE  SNR_NOX_MAE
+0  2025-10-04T00:00:00Z          0.460143     5.089167
+
+### Argument values ###
+start_time     : 2025-10-04 00:00:00   (input)
+end_time       : 2025-10-04 12:00:00   (input)
+query_hours    : 12.0   (default)
+influx_host    : 10.238.27.132   (default)
+influx_port    : 8086   (default)
+influx_user    : read_user   (default)
+influx_pass    : !Skepinfluxuser25   (default)
+influx_db      : SRS1   (default)
+measurement    : SRS1   (default)
+
+ InfluxDB 연결: 10.238.27.132:8086/SRS1
+ 실행 쿼리:
+SELECT "_time_gateway", "IncineratorStatus", "NOX_EQ_Status", "ICF_TMS_NOX_A", "SNR_NOX_PRED", "SNR_PMP_UW_S_1", "SNR_EQ_UW_F_1" FROM "SRS1" WHERE time >= '2025-10-04T00:00:00Z' AND time < '2025-10-04T12:00:00Z'
+
+ 조회 완료: 43200 행, 8 컬럼
+ 데이터 시간 범위: 2025-10-04 00:00:00+00:00 ~ 2025-10-04 11:59:59+00:00
+샘플 데이터 출력 (head, tail)
+                       time        _time_gateway  ...  SNR_PMP_UW_S_1  SNR_EQ_UW_F_1
+0 2025-10-04 00:00:00+00:00  2025-10-04 00:00:00  ...       48.014999      40.546875
+1 2025-10-04 00:00:01+00:00  2025-10-04 00:00:01  ...       48.014999      40.556252
+2 2025-10-04 00:00:02+00:00  2025-10-04 00:00:02  ...       48.026249      40.546875
+3 2025-10-04 00:00:03+00:00  2025-10-04 00:00:03  ...       48.018749      40.546875
+4 2025-10-04 00:00:04+00:00  2025-10-04 00:00:04  ...       48.014999      40.546875
+
+[5 rows x 8 columns]
+                           time  ... SNR_EQ_UW_F_1
+43195 2025-10-04 11:59:55+00:00  ...     53.203125
+43196 2025-10-04 11:59:56+00:00  ...     53.203125
+43197 2025-10-04 11:59:57+00:00  ...     53.212502
+43198 2025-10-04 11:59:58+00:00  ...     53.212502
+43199 2025-10-04 11:59:59+00:00  ...     53.203125
+
+[5 rows x 8 columns]
+
+ 필터/정렬/중복처리 후: 41522 행
+
+[METRIC] LGBM 1-min MAE (N=8254): 4.2984
+
+[PUMP] 평균 주파수 (Hz): 44.92 (N=41522)
+[FLOW] 평균 유량: 35.2473 (N=41522)
+[FLOW] 베이스라인 유량(60Hz 기준, 63.73) 대비 절감률: 44.69%
+
+[RESULT] Summary one-row DataFrame:
+          _time_gateway  UREA_SAVING_RATE  SNR_NOX_MAE
+0  2025-10-04T12:00:00Z          0.446928     4.298356
+
+### Argument values ###
+start_time     : 2025-10-04 12:00:00   (input)
+end_time       : 2025-10-05 00:00:00   (input)
+query_hours    : 12.0   (default)
+influx_host    : 10.238.27.132   (default)
+influx_port    : 8086   (default)
+influx_user    : read_user   (default)
+influx_pass    : !Skepinfluxuser25   (default)
+influx_db      : SRS1   (default)
+measurement    : SRS1   (default)
+
+ InfluxDB 연결: 10.238.27.132:8086/SRS1
+ 실행 쿼리:
+SELECT "_time_gateway", "IncineratorStatus", "NOX_EQ_Status", "ICF_TMS_NOX_A", "SNR_NOX_PRED", "SNR_PMP_UW_S_1", "SNR_EQ_UW_F_1" FROM "SRS1" WHERE time >= '2025-10-04T12:00:00Z' AND time < '2025-10-05T00:00:00Z'
+
+ 조회 완료: 43200 행, 8 컬럼
+ 데이터 시간 범위: 2025-10-04 12:00:00+00:00 ~ 2025-10-04 23:59:59+00:00
+샘플 데이터 출력 (head, tail)
+                       time        _time_gateway  ...  SNR_PMP_UW_S_1  SNR_EQ_UW_F_1
+0 2025-10-04 12:00:00+00:00  2025-10-04 12:00:00  ...       55.323749      53.203125
+1 2025-10-04 12:00:01+00:00  2025-10-04 12:00:01  ...       55.320000      53.203125
+2 2025-10-04 12:00:02+00:00  2025-10-04 12:00:02  ...       55.312500      53.212502
+3 2025-10-04 12:00:03+00:00  2025-10-04 12:00:03  ...       54.322498      53.203125
+4 2025-10-04 12:00:04+00:00  2025-10-04 12:00:04  ...       54.311249      53.025002
+
+[5 rows x 8 columns]
+                           time  ... SNR_EQ_UW_F_1
+43195 2025-10-04 23:59:55+00:00  ...     35.325001
+43196 2025-10-04 23:59:56+00:00  ...     35.868752
+43197 2025-10-04 23:59:57+00:00  ...     36.168751
+43198 2025-10-04 23:59:58+00:00  ...     36.609375
+43199 2025-10-04 23:59:59+00:00  ...     36.618752
+
+[5 rows x 8 columns]
+
+ 필터/정렬/중복처리 후: 41522 행
+
+[METRIC] LGBM 1-min MAE (N=8253): 1.9340
+
+[PUMP] 평균 주파수 (Hz): 43.33 (N=41522)
+[FLOW] 평균 유량: 32.5200 (N=41522)
+[FLOW] 베이스라인 유량(60Hz 기준, 63.73) 대비 절감률: 48.97%
+
+[RESULT] Summary one-row DataFrame:
+          _time_gateway  UREA_SAVING_RATE  SNR_NOX_MAE
+0  2025-10-05T00:00:00Z          0.489722     1.934039
+
+### Argument values ###
+start_time     : 2025-10-05 00:00:00   (input)
+end_time       : 2025-10-05 12:00:00   (input)
+query_hours    : 12.0   (default)
+influx_host    : 10.238.27.132   (default)
+influx_port    : 8086   (default)
+influx_user    : read_user   (default)
+influx_pass    : !Skepinfluxuser25   (default)
+influx_db      : SRS1   (default)
+measurement    : SRS1   (default)
+
+ InfluxDB 연결: 10.238.27.132:8086/SRS1
+ 실행 쿼리:
+SELECT "_time_gateway", "IncineratorStatus", "NOX_EQ_Status", "ICF_TMS_NOX_A", "SNR_NOX_PRED", "SNR_PMP_UW_S_1", "SNR_EQ_UW_F_1" FROM "SRS1" WHERE time >= '2025-10-05T00:00:00Z' AND time < '2025-10-05T12:00:00Z'
+
+ 조회 완료: 43200 행, 8 컬럼
+ 데이터 시간 범위: 2025-10-05 00:00:00+00:00 ~ 2025-10-05 11:59:59+00:00
+샘플 데이터 출력 (head, tail)
+                       time        _time_gateway  ...  SNR_PMP_UW_S_1  SNR_EQ_UW_F_1
+0 2025-10-05 00:00:00+00:00  2025-10-05 00:00:00  ...       46.912498      36.918751
+1 2025-10-05 00:00:01+00:00  2025-10-05 00:00:01  ...       46.916248      37.331249
+2 2025-10-05 00:00:02+00:00  2025-10-05 00:00:02  ...       46.912498      37.650002
+3 2025-10-05 00:00:03+00:00  2025-10-05 00:00:03  ...       46.901249      38.118752
+4 2025-10-05 00:00:04+00:00  2025-10-05 00:00:04  ...       46.919998      38.278126
+
+[5 rows x 8 columns]
+                           time  ... SNR_EQ_UW_F_1
+43195 2025-10-05 11:59:55+00:00  ...     25.481251
+43196 2025-10-05 11:59:56+00:00  ...     25.762501
+43197 2025-10-05 11:59:57+00:00  ...     25.903126
+43198 2025-10-05 11:59:58+00:00  ...     25.959375
+43199 2025-10-05 11:59:59+00:00  ...     25.959375
+
+[5 rows x 8 columns]
+
+ 필터/정렬/중복처리 후: 41540 행
+
+[METRIC] LGBM 1-min MAE (N=8258): 2.7896
+
+[PUMP] 평균 주파수 (Hz): 44.19 (N=41540)
+[FLOW] 평균 유량: 34.0037 (N=41540)
+[FLOW] 베이스라인 유량(60Hz 기준, 63.73) 대비 절감률: 46.64%
+
+[RESULT] Summary one-row DataFrame:
+          _time_gateway  UREA_SAVING_RATE  SNR_NOX_MAE
+0  2025-10-05T12:00:00Z          0.466441     2.789571
+
+### Argument values ###
+start_time     : 2025-10-05 12:00:00   (input)
+end_time       : 2025-10-06 00:00:00   (input)
+query_hours    : 12.0   (default)
+influx_host    : 10.238.27.132   (default)
+influx_port    : 8086   (default)
+influx_user    : read_user   (default)
+influx_pass    : !Skepinfluxuser25   (default)
+influx_db      : SRS1   (default)
+measurement    : SRS1   (default)
+
+ InfluxDB 연결: 10.238.27.132:8086/SRS1
+ 실행 쿼리:
+SELECT "_time_gateway", "IncineratorStatus", "NOX_EQ_Status", "ICF_TMS_NOX_A", "SNR_NOX_PRED", "SNR_PMP_UW_S_1", "SNR_EQ_UW_F_1" FROM "SRS1" WHERE time >= '2025-10-05T12:00:00Z' AND time < '2025-10-06T00:00:00Z'
+
+ 조회 완료: 43185 행, 8 컬럼
+ 데이터 시간 범위: 2025-10-05 12:00:00+00:00 ~ 2025-10-05 23:59:59+00:00
+샘플 데이터 출력 (head, tail)
+                       time        _time_gateway  ...  SNR_PMP_UW_S_1  SNR_EQ_UW_F_1
+0 2025-10-05 12:00:00+00:00  2025-10-05 12:00:00  ...       39.652500      25.959375
+1 2025-10-05 12:00:01+00:00  2025-10-05 12:00:01  ...       39.652500      25.959375
+2 2025-10-05 12:00:02+00:00  2025-10-05 12:00:02  ...       39.667499      25.968750
+3 2025-10-05 12:00:03+00:00  2025-10-05 12:00:03  ...       39.656250      25.959375
+4 2025-10-05 12:00:04+00:00  2025-10-05 12:00:04  ...       39.660000      26.137501
+
+[5 rows x 8 columns]
+                           time  ... SNR_EQ_UW_F_1
+43180 2025-10-05 23:59:55+00:00  ...     40.546875
+43181 2025-10-05 23:59:56+00:00  ...     40.546875
+43182 2025-10-05 23:59:57+00:00  ...     40.546875
+43183 2025-10-05 23:59:58+00:00  ...     40.546875
+43184 2025-10-05 23:59:59+00:00  ...     40.556252
+
+[5 rows x 8 columns]
+
+ 필터/정렬/중복처리 후: 41481 행
+
+[METRIC] LGBM 1-min MAE (N=8236): 2.4021
+
+[PUMP] 평균 주파수 (Hz): 43.84 (N=41481)
+[FLOW] 평균 유량: 33.3186 (N=41481)
+[FLOW] 베이스라인 유량(60Hz 기준, 63.73) 대비 절감률: 47.72%
+
+[RESULT] Summary one-row DataFrame:
+          _time_gateway  UREA_SAVING_RATE  SNR_NOX_MAE
+0  2025-10-06T00:00:00Z          0.477191     2.402068
+
+### Argument values ###
+start_time     : 2025-10-06 00:00:00   (input)
+end_time       : 2025-10-06 12:00:00   (input)
+query_hours    : 12.0   (default)
+influx_host    : 10.238.27.132   (default)
+influx_port    : 8086   (default)
+influx_user    : read_user   (default)
+influx_pass    : !Skepinfluxuser25   (default)
+influx_db      : SRS1   (default)
+measurement    : SRS1   (default)
+
+ InfluxDB 연결: 10.238.27.132:8086/SRS1
+ 실행 쿼리:
+SELECT "_time_gateway", "IncineratorStatus", "NOX_EQ_Status", "ICF_TMS_NOX_A", "SNR_NOX_PRED", "SNR_PMP_UW_S_1", "SNR_EQ_UW_F_1" FROM "SRS1" WHERE time >= '2025-10-06T00:00:00Z' AND time < '2025-10-06T12:00:00Z'
+
+ 조회 완료: 43194 행, 8 컬럼
+ 데이터 시간 범위: 2025-10-06 00:00:00+00:00 ~ 2025-10-06 11:59:59+00:00
+샘플 데이터 출력 (head, tail)
+                       time        _time_gateway  ...  SNR_PMP_UW_S_1  SNR_EQ_UW_F_1
+0 2025-10-06 00:00:00+00:00  2025-10-06 00:00:00  ...       47.970001      40.546875
+1 2025-10-06 00:00:01+00:00  2025-10-06 00:00:01  ...       47.966251      40.546875
+2 2025-10-06 00:00:02+00:00  2025-10-06 00:00:02  ...       47.966251      40.546875
+3 2025-10-06 00:00:03+00:00  2025-10-06 00:00:03  ...       47.966251      40.546875
+4 2025-10-06 00:00:04+00:00  2025-10-06 00:00:04  ...       47.966251      40.546875
+
+[5 rows x 8 columns]
+                           time  ... SNR_EQ_UW_F_1
+43189 2025-10-06 11:59:55+00:00  ...     28.396875
+43190 2025-10-06 11:59:56+00:00  ...     28.396875
+43191 2025-10-06 11:59:57+00:00  ...     28.209375
+43192 2025-10-06 11:59:58+00:00  ...     28.021875
+43193 2025-10-06 11:59:59+00:00  ...     28.021875
+
+[5 rows x 8 columns]
+
+ 필터/정렬/중복처리 후: 41503 행
+
+[METRIC] LGBM 1-min MAE (N=8244): 2.6987
+
+[PUMP] 평균 주파수 (Hz): 45.19 (N=41503)
+[FLOW] 평균 유량: 35.6071 (N=41503)
+[FLOW] 베이스라인 유량(60Hz 기준, 63.73) 대비 절감률: 44.13%
+
+[RESULT] Summary one-row DataFrame:
+          _time_gateway  UREA_SAVING_RATE  SNR_NOX_MAE
+0  2025-10-06T12:00:00Z          0.441283     2.698673
+
+### Argument values ###
+start_time     : 2025-10-06 12:00:00   (input)
+end_time       : 2025-10-07 00:00:00   (input)
+query_hours    : 12.0   (default)
+influx_host    : 10.238.27.132   (default)
+influx_port    : 8086   (default)
+influx_user    : read_user   (default)
+influx_pass    : !Skepinfluxuser25   (default)
+influx_db      : SRS1   (default)
+measurement    : SRS1   (default)
+
+ InfluxDB 연결: 10.238.27.132:8086/SRS1
+ 실행 쿼리:
+SELECT "_time_gateway", "IncineratorStatus", "NOX_EQ_Status", "ICF_TMS_NOX_A", "SNR_NOX_PRED", "SNR_PMP_UW_S_1", "SNR_EQ_UW_F_1" FROM "SRS1" WHERE time >= '2025-10-06T12:00:00Z' AND time < '2025-10-07T00:00:00Z'
+
+ 조회 완료: 43200 행, 8 컬럼
+ 데이터 시간 범위: 2025-10-06 12:00:00+00:00 ~ 2025-10-06 23:59:59+00:00
+샘플 데이터 출력 (head, tail)
+                       time        _time_gateway  ...  SNR_PMP_UW_S_1  SNR_EQ_UW_F_1
+0 2025-10-06 12:00:00+00:00  2025-10-06 12:00:00  ...       40.732498      28.031250
+1 2025-10-06 12:00:01+00:00  2025-10-06 12:00:01  ...       40.766251      28.021875
+2 2025-10-06 12:00:02+00:00  2025-10-06 12:00:02  ...       40.762501      28.021875
+3 2025-10-06 12:00:03+00:00  2025-10-06 12:00:03  ...       40.755001      28.021875
+4 2025-10-06 12:00:04+00:00  2025-10-06 12:00:04  ...       40.762501      28.021875
+
+[5 rows x 8 columns]
+                           time  ... SNR_EQ_UW_F_1
+43195 2025-10-06 23:59:55+00:00  ...     31.396875
+43196 2025-10-06 23:59:56+00:00  ...     30.440624
+43197 2025-10-06 23:59:57+00:00  ...     29.878124
+43198 2025-10-06 23:59:58+00:00  ...     29.878124
+43199 2025-10-06 23:59:59+00:00  ...     29.165625
+
+[5 rows x 8 columns]
+
+ 필터/정렬/중복처리 후: 41527 행
+
+[METRIC] LGBM 1-min MAE (N=8254): 2.3222
+
+[PUMP] 평균 주파수 (Hz): 43.47 (N=41527)
+[FLOW] 평균 유량: 32.5620 (N=41527)
+[FLOW] 베이스라인 유량(60Hz 기준, 63.73) 대비 절감률: 48.91%
+
+[RESULT] Summary one-row DataFrame:
+          _time_gateway  UREA_SAVING_RATE  SNR_NOX_MAE
+0  2025-10-07T00:00:00Z          0.489063     2.322158
+
+### Argument values ###
+start_time     : 2025-10-07 00:00:00   (input)
+end_time       : 2025-10-07 12:00:00   (input)
+query_hours    : 12.0   (default)
+influx_host    : 10.238.27.132   (default)
+influx_port    : 8086   (default)
+influx_user    : read_user   (default)
+influx_pass    : !Skepinfluxuser25   (default)
+influx_db      : SRS1   (default)
+measurement    : SRS1   (default)
+
+ InfluxDB 연결: 10.238.27.132:8086/SRS1
+ 실행 쿼리:
+SELECT "_time_gateway", "IncineratorStatus", "NOX_EQ_Status", "ICF_TMS_NOX_A", "SNR_NOX_PRED", "SNR_PMP_UW_S_1", "SNR_EQ_UW_F_1" FROM "SRS1" WHERE time >= '2025-10-07T00:00:00Z' AND time < '2025-10-07T12:00:00Z'
+
+ 조회 완료: 43196 행, 8 컬럼
+ 데이터 시간 범위: 2025-10-07 00:00:00+00:00 ~ 2025-10-07 11:59:59+00:00
+샘플 데이터 출력 (head, tail)
+                       time        _time_gateway  ...  SNR_PMP_UW_S_1  SNR_EQ_UW_F_1
+0 2025-10-07 00:00:00+00:00  2025-10-07 00:00:00  ...       39.716251      28.490625
+1 2025-10-07 00:00:01+00:00  2025-10-07 00:00:01  ...       39.712502      28.049999
+2 2025-10-07 00:00:02+00:00  2025-10-07 00:00:02  ...       39.723751      27.656250
+3 2025-10-07 00:00:03+00:00  2025-10-07 00:00:03  ...       39.720001      27.271875
+4 2025-10-07 00:00:04+00:00  2025-10-07 00:00:04  ...       39.716251      26.924999
+
+[5 rows x 8 columns]
+                           time  ... SNR_EQ_UW_F_1
+43191 2025-10-07 11:59:55+00:00  ...     26.137501
+43192 2025-10-07 11:59:56+00:00  ...     26.137501
+43193 2025-10-07 11:59:57+00:00  ...     26.137501
+43194 2025-10-07 11:59:58+00:00  ...     26.146875
+43195 2025-10-07 11:59:59+00:00  ...     26.146875
+
+[5 rows x 8 columns]
+
+ 필터/정렬/중복처리 후: 41520 행
+
+[METRIC] LGBM 1-min MAE (N=8253): 2.5308
+
+[PUMP] 평균 주파수 (Hz): 43.94 (N=41520)
+[FLOW] 평균 유량: 32.9969 (N=41520)
+[FLOW] 베이스라인 유량(60Hz 기준, 63.73) 대비 절감률: 48.22%
+
+[RESULT] Summary one-row DataFrame:
+          _time_gateway  UREA_SAVING_RATE  SNR_NOX_MAE
+0  2025-10-07T12:00:00Z          0.482239     2.530832
+
+### Argument values ###
+start_time     : 2025-10-07 12:00:00   (input)
+end_time       : 2025-10-08 00:00:00   (input)
+query_hours    : 12.0   (default)
+influx_host    : 10.238.27.132   (default)
+influx_port    : 8086   (default)
+influx_user    : read_user   (default)
+influx_pass    : !Skepinfluxuser25   (default)
+influx_db      : SRS1   (default)
+measurement    : SRS1   (default)
+
+ InfluxDB 연결: 10.238.27.132:8086/SRS1
+ 실행 쿼리:
+SELECT "_time_gateway", "IncineratorStatus", "NOX_EQ_Status", "ICF_TMS_NOX_A", "SNR_NOX_PRED", "SNR_PMP_UW_S_1", "SNR_EQ_UW_F_1" FROM "SRS1" WHERE time >= '2025-10-07T12:00:00Z' AND time < '2025-10-08T00:00:00Z'
+
+ 조회 완료: 43200 행, 8 컬럼
+ 데이터 시간 범위: 2025-10-07 12:00:00+00:00 ~ 2025-10-07 23:59:59+00:00
+샘플 데이터 출력 (head, tail)
+                       time        _time_gateway  ...  SNR_PMP_UW_S_1  SNR_EQ_UW_F_1
+0 2025-10-07 12:00:00+00:00  2025-10-07 12:00:00  ...       39.660000      26.137501
+1 2025-10-07 12:00:01+00:00  2025-10-07 12:00:01  ...       40.271252      26.137501
+2 2025-10-07 12:00:02+00:00  2025-10-07 12:00:02  ...       40.676251      26.137501
+3 2025-10-07 12:00:03+00:00  2025-10-07 12:00:03  ...       40.740002      26.137501
+4 2025-10-07 12:00:04+00:00  2025-10-07 12:00:04  ...       40.728748      26.137501
+
+[5 rows x 8 columns]
+                           time  ... SNR_EQ_UW_F_1
+43195 2025-10-07 23:59:55+00:00  ...     32.868752
+43196 2025-10-07 23:59:56+00:00  ...     32.868752
+43197 2025-10-07 23:59:57+00:00  ...     32.868752
+43198 2025-10-07 23:59:58+00:00  ...     32.878124
+43199 2025-10-07 23:59:59+00:00  ...     32.868752
+
+[5 rows x 8 columns]
+
+ 필터/정렬/중복처리 후: 41520 행
+
+[METRIC] LGBM 1-min MAE (N=8256): 2.2591
+
+[PUMP] 평균 주파수 (Hz): 43.92 (N=41520)
+[FLOW] 평균 유량: 32.8961 (N=41520)
+[FLOW] 베이스라인 유량(60Hz 기준, 63.73) 대비 절감률: 48.38%
+
+[RESULT] Summary one-row DataFrame:
+          _time_gateway  UREA_SAVING_RATE  SNR_NOX_MAE
+0  2025-10-08T00:00:00Z          0.483821     2.259123
+
+### Argument values ###
+start_time     : 2025-10-08 00:00:00   (input)
+end_time       : 2025-10-08 12:00:00   (input)
+query_hours    : 12.0   (default)
+influx_host    : 10.238.27.132   (default)
+influx_port    : 8086   (default)
+influx_user    : read_user   (default)
+influx_pass    : !Skepinfluxuser25   (default)
+influx_db      : SRS1   (default)
+measurement    : SRS1   (default)
+
+ InfluxDB 연결: 10.238.27.132:8086/SRS1
+ 실행 쿼리:
+SELECT "_time_gateway", "IncineratorStatus", "NOX_EQ_Status", "ICF_TMS_NOX_A", "SNR_NOX_PRED", "SNR_PMP_UW_S_1", "SNR_EQ_UW_F_1" FROM "SRS1" WHERE time >= '2025-10-08T00:00:00Z' AND time < '2025-10-08T12:00:00Z'
+
+ 조회 완료: 43198 행, 8 컬럼
+ 데이터 시간 범위: 2025-10-08 00:00:00+00:00 ~ 2025-10-08 11:59:59+00:00
+샘플 데이터 출력 (head, tail)
+                       time        _time_gateway  ...  SNR_PMP_UW_S_1  SNR_EQ_UW_F_1
+0 2025-10-08 00:00:00+00:00  2025-10-08 00:00:00  ...       42.810001      32.775002
+1 2025-10-08 00:00:01+00:00  2025-10-08 00:00:01  ...       42.813751      32.493752
+2 2025-10-08 00:00:02+00:00  2025-10-08 00:00:02  ...       42.813751      32.156250
+3 2025-10-08 00:00:03+00:00  2025-10-08 00:00:03  ...       41.973751      32.006248
+4 2025-10-08 00:00:04+00:00  2025-10-08 00:00:04  ...       41.763748      31.415625
+
+[5 rows x 8 columns]
+                           time  ... SNR_EQ_UW_F_1
+43193 2025-10-08 11:59:55+00:00  ...     27.918751
+43194 2025-10-08 11:59:56+00:00  ...     28.031250
+43195 2025-10-08 11:59:57+00:00  ...     28.031250
+43196 2025-10-08 11:59:58+00:00  ...     28.031250
+43197 2025-10-08 11:59:59+00:00  ...     28.181250
+
+[5 rows x 8 columns]
+
+ 필터/정렬/중복처리 후: 42078 행
+
+[METRIC] LGBM 1-min MAE (N=8377): 2.1673
+
+[PUMP] 평균 주파수 (Hz): 44.20 (N=42078)
+[FLOW] 평균 유량: 34.0676 (N=42078)
+[FLOW] 베이스라인 유량(60Hz 기준, 63.73) 대비 절감률: 46.54%
+
+[RESULT] Summary one-row DataFrame:
+          _time_gateway  UREA_SAVING_RATE  SNR_NOX_MAE
+0  2025-10-08T12:00:00Z          0.465439     2.167338
+
+### Argument values ###
+start_time     : 2025-10-08 12:00:00   (input)
+end_time       : 2025-10-09 00:00:00   (input)
+query_hours    : 12.0   (default)
+influx_host    : 10.238.27.132   (default)
+influx_port    : 8086   (default)
+influx_user    : read_user   (default)
+influx_pass    : !Skepinfluxuser25   (default)
+influx_db      : SRS1   (default)
+measurement    : SRS1   (default)
+
+ InfluxDB 연결: 10.238.27.132:8086/SRS1
+ 실행 쿼리:
+SELECT "_time_gateway", "IncineratorStatus", "NOX_EQ_Status", "ICF_TMS_NOX_A", "SNR_NOX_PRED", "SNR_PMP_UW_S_1", "SNR_EQ_UW_F_1" FROM "SRS1" WHERE time >= '2025-10-08T12:00:00Z' AND time < '2025-10-09T00:00:00Z'
+
+ 조회 완료: 43200 행, 8 컬럼
+ 데이터 시간 범위: 2025-10-08 12:00:00+00:00 ~ 2025-10-08 23:59:59+00:00
+샘플 데이터 출력 (head, tail)
+                       time        _time_gateway  ...  SNR_PMP_UW_S_1  SNR_EQ_UW_F_1
+0 2025-10-08 12:00:00+00:00  2025-10-08 12:00:00  ...       41.778751      28.396875
+1 2025-10-08 12:00:01+00:00  2025-10-08 12:00:01  ...       41.767502      28.556250
+2 2025-10-08 12:00:02+00:00  2025-10-08 12:00:02  ...       41.913750      29.053125
+3 2025-10-08 12:00:03+00:00  2025-10-08 12:00:03  ...       43.799999      29.174999
+4 2025-10-08 12:00:04+00:00  2025-10-08 12:00:04  ...       43.814999      29.643749
+
+[5 rows x 8 columns]
+                           time  ... SNR_EQ_UW_F_1
+43195 2025-10-08 23:59:55+00:00  ...     29.203125
+43196 2025-10-08 23:59:56+00:00  ...     29.043751
+43197 2025-10-08 23:59:57+00:00  ...     28.481251
+43198 2025-10-08 23:59:58+00:00  ...     28.396875
+43199 2025-10-08 23:59:59+00:00  ...     28.396875
+
+[5 rows x 8 columns]
+
+ 필터/정렬/중복처리 후: 43196 행
+
+[METRIC] LGBM 1-min MAE (N=8628): 2.3472
+
+[PUMP] 평균 주파수 (Hz): 44.26 (N=43196)
+[FLOW] 평균 유량: 34.1729 (N=43196)
+[FLOW] 베이스라인 유량(60Hz 기준, 63.73) 대비 절감률: 46.38%
+
+[RESULT] Summary one-row DataFrame:
+          _time_gateway  UREA_SAVING_RATE  SNR_NOX_MAE
+0  2025-10-09T00:00:00Z          0.463787     2.347151
+
+### Argument values ###
+start_time     : 2025-10-09 00:00:00   (input)
+end_time       : 2025-10-09 12:00:00   (input)
+query_hours    : 12.0   (default)
+influx_host    : 10.238.27.132   (default)
+influx_port    : 8086   (default)
+influx_user    : read_user   (default)
+influx_pass    : !Skepinfluxuser25   (default)
+influx_db      : SRS1   (default)
+measurement    : SRS1   (default)
+
+ InfluxDB 연결: 10.238.27.132:8086/SRS1
+ 실행 쿼리:
+SELECT "_time_gateway", "IncineratorStatus", "NOX_EQ_Status", "ICF_TMS_NOX_A", "SNR_NOX_PRED", "SNR_PMP_UW_S_1", "SNR_EQ_UW_F_1" FROM "SRS1" WHERE time >= '2025-10-09T00:00:00Z' AND time < '2025-10-09T12:00:00Z'
+
+ 조회 완료: 43200 행, 8 컬럼
+ 데이터 시간 범위: 2025-10-09 00:00:00+00:00 ~ 2025-10-09 11:59:59+00:00
+샘플 데이터 출력 (head, tail)
+                       time        _time_gateway  ...  SNR_PMP_UW_S_1  SNR_EQ_UW_F_1
+0 2025-10-09 00:00:00+00:00  2025-10-09 00:00:00  ...       41.775002      28.462500
+1 2025-10-09 00:00:01+00:00  2025-10-09 00:00:01  ...       42.322498      28.959375
+2 2025-10-09 00:00:02+00:00  2025-10-09 00:00:02  ...       42.836250      29.165625
+3 2025-10-09 00:00:03+00:00  2025-10-09 00:00:03  ...       42.828751      29.456249
+4 2025-10-09 00:00:04+00:00  2025-10-09 00:00:04  ...       42.825001      29.887501
+
+[5 rows x 8 columns]
+                           time  ... SNR_EQ_UW_F_1
+43195 2025-10-09 11:59:55+00:00  ...     32.878124
+43196 2025-10-09 11:59:56+00:00  ...     32.878124
+43197 2025-10-09 11:59:57+00:00  ...     32.878124
+43198 2025-10-09 11:59:58+00:00  ...     32.878124
+43199 2025-10-09 11:59:59+00:00  ...     32.878124
+
+[5 rows x 8 columns]
+
+ 필터/정렬/중복처리 후: 43192 행
+
+[METRIC] LGBM 1-min MAE (N=8621): 2.5753
+
+[PUMP] 평균 주파수 (Hz): 46.19 (N=43192)
+[FLOW] 평균 유량: 37.9114 (N=43192)
+[FLOW] 베이스라인 유량(60Hz 기준, 63.73) 대비 절감률: 40.51%
+
+[RESULT] Summary one-row DataFrame:
+          _time_gateway  UREA_SAVING_RATE  SNR_NOX_MAE
+0  2025-10-09T12:00:00Z          0.405124     2.575269
+
+### Argument values ###
+start_time     : 2025-10-09 12:00:00   (input)
+end_time       : 2025-10-10 00:00:00   (input)
+query_hours    : 12.0   (default)
+influx_host    : 10.238.27.132   (default)
+influx_port    : 8086   (default)
+influx_user    : read_user   (default)
+influx_pass    : !Skepinfluxuser25   (default)
+influx_db      : SRS1   (default)
+measurement    : SRS1   (default)
+
+ InfluxDB 연결: 10.238.27.132:8086/SRS1
+ 실행 쿼리:
+SELECT "_time_gateway", "IncineratorStatus", "NOX_EQ_Status", "ICF_TMS_NOX_A", "SNR_NOX_PRED", "SNR_PMP_UW_S_1", "SNR_EQ_UW_F_1" FROM "SRS1" WHERE time >= '2025-10-09T12:00:00Z' AND time < '2025-10-10T00:00:00Z'
+
+ 조회 완료: 43197 행, 8 컬럼
+ 데이터 시간 범위: 2025-10-09 12:00:00+00:00 ~ 2025-10-09 23:59:59+00:00
+샘플 데이터 출력 (head, tail)
+                       time        _time_gateway  ...  SNR_PMP_UW_S_1  SNR_EQ_UW_F_1
+0 2025-10-09 12:00:00+00:00  2025-10-09 12:00:00  ...       42.813751      32.878124
+1 2025-10-09 12:00:01+00:00  2025-10-09 12:00:01  ...       42.821251      32.878124
+2 2025-10-09 12:00:02+00:00  2025-10-09 12:00:02  ...       42.806252      32.878124
+3 2025-10-09 12:00:03+00:00  2025-10-09 12:00:03  ...       42.802502      32.878124
+4 2025-10-09 12:00:04+00:00  2025-10-09 12:00:04  ...       42.813751      32.878124
+
+[5 rows x 8 columns]
+                           time  ... SNR_EQ_UW_F_1
+43192 2025-10-09 23:59:55+00:00  ...     34.893749
+43193 2025-10-09 23:59:56+00:00  ...     34.743752
+43194 2025-10-09 23:59:57+00:00  ...     34.790627
+43195 2025-10-09 23:59:58+00:00  ...     34.931252
+43196 2025-10-09 23:59:59+00:00  ...     35.109375
+
+[5 rows x 8 columns]
+
+ 필터/정렬/중복처리 후: 43190 행
+
+[METRIC] LGBM 1-min MAE (N=8625): 1.9546
+
+[PUMP] 평균 주파수 (Hz): 45.48 (N=43190)
+[FLOW] 평균 유량: 37.4235 (N=43190)
+[FLOW] 베이스라인 유량(60Hz 기준, 63.73) 대비 절감률: 41.28%
+
+[RESULT] Summary one-row DataFrame:
+          _time_gateway  UREA_SAVING_RATE  SNR_NOX_MAE
+0  2025-10-10T00:00:00Z           0.41278     1.954597
+
+### Argument values ###
+start_time     : 2025-10-10 00:00:00   (input)
+end_time       : 2025-10-10 12:00:00   (input)
+query_hours    : 12.0   (default)
+influx_host    : 10.238.27.132   (default)
+influx_port    : 8086   (default)
+influx_user    : read_user   (default)
+influx_pass    : !Skepinfluxuser25   (default)
+influx_db      : SRS1   (default)
+measurement    : SRS1   (default)
+
+ InfluxDB 연결: 10.238.27.132:8086/SRS1
+ 실행 쿼리:
+SELECT "_time_gateway", "IncineratorStatus", "NOX_EQ_Status", "ICF_TMS_NOX_A", "SNR_NOX_PRED", "SNR_PMP_UW_S_1", "SNR_EQ_UW_F_1" FROM "SRS1" WHERE time >= '2025-10-10T00:00:00Z' AND time < '2025-10-10T12:00:00Z'
+
+ 조회 완료: 43186 행, 8 컬럼
+ 데이터 시간 범위: 2025-10-10 00:00:00+00:00 ~ 2025-10-10 11:59:59+00:00
+샘플 데이터 출력 (head, tail)
+                       time        _time_gateway  ...  SNR_PMP_UW_S_1  SNR_EQ_UW_F_1
+0 2025-10-10 00:00:00+00:00  2025-10-10 00:00:00  ...       43.908749      35.109375
+1 2025-10-10 00:00:01+00:00  2025-10-10 00:00:01  ...       43.856251      35.109375
+2 2025-10-10 00:00:02+00:00  2025-10-10 00:00:02  ...       43.871250      35.109375
+3 2025-10-10 00:00:03+00:00  2025-10-10 00:00:03  ...       43.852501      35.109375
+4 2025-10-10 00:00:04+00:00  2025-10-10 00:00:04  ...       43.867500      35.109375
+
+[5 rows x 8 columns]
+                           time  ... SNR_EQ_UW_F_1
+43181 2025-10-10 11:59:55+00:00  ...     53.793751
+43182 2025-10-10 11:59:56+00:00  ...     53.793751
+43183 2025-10-10 11:59:57+00:00  ...     53.793751
+43184 2025-10-10 11:59:58+00:00  ...     53.934376
+43185 2025-10-10 11:59:59+00:00  ...     53.981251
+
+[5 rows x 8 columns]
+
+ 필터/정렬/중복처리 후: 43160 행
+
+[METRIC] LGBM 1-min MAE (N=8601): 2.5774
+
+[PUMP] 평균 주파수 (Hz): 44.74 (N=43160)
+[FLOW] 평균 유량: 36.1945 (N=43160)
+[FLOW] 베이스라인 유량(60Hz 기준, 63.73) 대비 절감률: 43.21%
+
+[RESULT] Summary one-row DataFrame:
+          _time_gateway  UREA_SAVING_RATE  SNR_NOX_MAE
+0  2025-10-10T12:00:00Z          0.432066     2.577384
+
+### Argument values ###
+start_time     : 2025-10-10 12:00:00   (input)
+end_time       : 2025-10-11 00:00:00   (input)
+query_hours    : 12.0   (default)
+influx_host    : 10.238.27.132   (default)
+influx_port    : 8086   (default)
+influx_user    : read_user   (default)
+influx_pass    : !Skepinfluxuser25   (default)
+influx_db      : SRS1   (default)
+measurement    : SRS1   (default)
+
+ InfluxDB 연결: 10.238.27.132:8086/SRS1
+ 실행 쿼리:
+SELECT "_time_gateway", "IncineratorStatus", "NOX_EQ_Status", "ICF_TMS_NOX_A", "SNR_NOX_PRED", "SNR_PMP_UW_S_1", "SNR_EQ_UW_F_1" FROM "SRS1" WHERE time >= '2025-10-10T12:00:00Z' AND time < '2025-10-11T00:00:00Z'
+
+ 조회 완료: 43200 행, 8 컬럼
+ 데이터 시간 범위: 2025-10-10 12:00:00+00:00 ~ 2025-10-10 23:59:59+00:00
+샘플 데이터 출력 (head, tail)
+                       time        _time_gateway  ...  SNR_PMP_UW_S_1  SNR_EQ_UW_F_1
+0 2025-10-10 12:00:00+00:00  2025-10-10 12:00:00  ...       55.308750      53.981251
+1 2025-10-10 12:00:01+00:00  2025-10-10 12:00:01  ...       55.331249      53.981251
+2 2025-10-10 12:00:02+00:00  2025-10-10 12:00:02  ...       55.342499      53.981251
+3 2025-10-10 12:00:03+00:00  2025-10-10 12:00:03  ...       55.312500      53.981251
+4 2025-10-10 12:00:04+00:00  2025-10-10 12:00:04  ...       55.305000      53.990623
+
+[5 rows x 8 columns]
+                           time  ... SNR_EQ_UW_F_1
+43195 2025-10-10 23:59:55+00:00  ...     24.862499
+43196 2025-10-10 23:59:56+00:00  ...     24.693750
+43197 2025-10-10 23:59:57+00:00  ...     24.693750
+43198 2025-10-10 23:59:58+00:00  ...     24.693750
+43199 2025-10-10 23:59:59+00:00  ...     24.684376
+
+[5 rows x 8 columns]
+
+ 필터/정렬/중복처리 후: 43196 행
+
+[METRIC] LGBM 1-min MAE (N=8625): 2.2129
+
+[PUMP] 평균 주파수 (Hz): 43.96 (N=43196)
+[FLOW] 평균 유량: 34.4910 (N=43196)
+[FLOW] 베이스라인 유량(60Hz 기준, 63.73) 대비 절감률: 45.88%
+
+[RESULT] Summary one-row DataFrame:
+          _time_gateway  UREA_SAVING_RATE  SNR_NOX_MAE
+0  2025-10-11T00:00:00Z          0.458795     2.212901
+
+### Argument values ###
+start_time     : 2025-10-11 00:00:00   (input)
+end_time       : 2025-10-11 12:00:00   (input)
+query_hours    : 12.0   (default)
+influx_host    : 10.238.27.132   (default)
+influx_port    : 8086   (default)
+influx_user    : read_user   (default)
+influx_pass    : !Skepinfluxuser25   (default)
+influx_db      : SRS1   (default)
+measurement    : SRS1   (default)
+
+ InfluxDB 연결: 10.238.27.132:8086/SRS1
+ 실행 쿼리:
+SELECT "_time_gateway", "IncineratorStatus", "NOX_EQ_Status", "ICF_TMS_NOX_A", "SNR_NOX_PRED", "SNR_PMP_UW_S_1", "SNR_EQ_UW_F_1" FROM "SRS1" WHERE time >= '2025-10-11T00:00:00Z' AND time < '2025-10-11T12:00:00Z'
+
+ 조회 완료: 43188 행, 8 컬럼
+ 데이터 시간 범위: 2025-10-11 00:00:00+00:00 ~ 2025-10-11 11:59:59+00:00
+샘플 데이터 출력 (head, tail)
+                       time        _time_gateway  ...  SNR_PMP_UW_S_1  SNR_EQ_UW_F_1
+0 2025-10-11 00:00:00+00:00  2025-10-11 00:00:00  ...       38.587502      24.684376
+1 2025-10-11 00:00:01+00:00  2025-10-11 00:00:01  ...       38.591251      24.684376
+2 2025-10-11 00:00:02+00:00  2025-10-11 00:00:02  ...       38.591251      25.031250
+3 2025-10-11 00:00:03+00:00  2025-10-11 00:00:03  ...       38.576248      25.040625
+4 2025-10-11 00:00:04+00:00  2025-10-11 00:00:04  ...       38.576248      25.040625
+
+[5 rows x 8 columns]
+                           time  ... SNR_EQ_UW_F_1
+43183 2025-10-11 11:59:55+00:00  ...     52.293751
+43184 2025-10-11 11:59:56+00:00  ...     52.134377
+43185 2025-10-11 11:59:57+00:00  ...     51.759377
+43186 2025-10-11 11:59:58+00:00  ...     51.431252
+43187 2025-10-11 11:59:59+00:00  ...     50.831249
+
+[5 rows x 8 columns]
+
+ 필터/정렬/중복처리 후: 43175 행
+
+[METRIC] LGBM 1-min MAE (N=8615): 2.4925
+
+[PUMP] 평균 주파수 (Hz): 44.13 (N=43175)
+[FLOW] 평균 유량: 34.7422 (N=43175)
+[FLOW] 베이스라인 유량(60Hz 기준, 63.73) 대비 절감률: 45.49%
+
+[RESULT] Summary one-row DataFrame:
+          _time_gateway  UREA_SAVING_RATE  SNR_NOX_MAE
+0  2025-10-11T12:00:00Z          0.454853     2.492482
+
+### Argument values ###
+start_time     : 2025-10-11 12:00:00   (input)
+end_time       : 2025-10-12 00:00:00   (input)
+query_hours    : 12.0   (default)
+influx_host    : 10.238.27.132   (default)
+influx_port    : 8086   (default)
+influx_user    : read_user   (default)
+influx_pass    : !Skepinfluxuser25   (default)
+influx_db      : SRS1   (default)
+measurement    : SRS1   (default)
+
+ InfluxDB 연결: 10.238.27.132:8086/SRS1
+ 실행 쿼리:
+SELECT "_time_gateway", "IncineratorStatus", "NOX_EQ_Status", "ICF_TMS_NOX_A", "SNR_NOX_PRED", "SNR_PMP_UW_S_1", "SNR_EQ_UW_F_1" FROM "SRS1" WHERE time >= '2025-10-11T12:00:00Z' AND time < '2025-10-12T00:00:00Z'
+
+ 조회 완료: 43190 행, 8 컬럼
+ 데이터 시간 범위: 2025-10-11 12:00:00+00:00 ~ 2025-10-11 23:59:59+00:00
+샘플 데이터 출력 (head, tail)
+                       time        _time_gateway  ...  SNR_PMP_UW_S_1  SNR_EQ_UW_F_1
+0 2025-10-11 12:00:00+00:00  2025-10-11 12:00:00  ...       50.171249      50.578125
+1 2025-10-11 12:00:01+00:00  2025-10-11 12:00:01  ...       50.111252      49.650002
+2 2025-10-11 12:00:02+00:00  2025-10-11 12:00:02  ...       50.088749      48.253124
+3 2025-10-11 12:00:03+00:00  2025-10-11 12:00:03  ...       50.137501      47.099998
+4 2025-10-11 12:00:04+00:00  2025-10-11 12:00:04  ...       50.088749      46.284374
+
+[5 rows x 8 columns]
+                           time  ... SNR_EQ_UW_F_1
+43185 2025-10-11 23:59:55+00:00  ...     38.859375
+43186 2025-10-11 23:59:56+00:00  ...     38.868752
+43187 2025-10-11 23:59:57+00:00  ...     38.868752
+43188 2025-10-11 23:59:58+00:00  ...     38.868752
+43189 2025-10-11 23:59:59+00:00  ...     38.859375
+
+[5 rows x 8 columns]
+
+ 필터/정렬/중복처리 후: 41512 행
+
+[METRIC] LGBM 1-min MAE (N=8248): 2.4526
+
+[PUMP] 평균 주파수 (Hz): 45.07 (N=41512)
+[FLOW] 평균 유량: 36.3336 (N=41512)
+[FLOW] 베이스라인 유량(60Hz 기준, 63.73) 대비 절감률: 42.99%
+
+[RESULT] Summary one-row DataFrame:
+          _time_gateway  UREA_SAVING_RATE  SNR_NOX_MAE
+0  2025-10-12T00:00:00Z          0.429882     2.452619
+
+### Argument values ###
+start_time     : 2025-10-12 00:00:00   (input)
+end_time       : 2025-10-12 12:00:00   (input)
+query_hours    : 12.0   (default)
+influx_host    : 10.238.27.132   (default)
+influx_port    : 8086   (default)
+influx_user    : read_user   (default)
+influx_pass    : !Skepinfluxuser25   (default)
+influx_db      : SRS1   (default)
+measurement    : SRS1   (default)
+
+ InfluxDB 연결: 10.238.27.132:8086/SRS1
+ 실행 쿼리:
+SELECT "_time_gateway", "IncineratorStatus", "NOX_EQ_Status", "ICF_TMS_NOX_A", "SNR_NOX_PRED", "SNR_PMP_UW_S_1", "SNR_EQ_UW_F_1" FROM "SRS1" WHERE time >= '2025-10-12T00:00:00Z' AND time < '2025-10-12T12:00:00Z'
+
+ 조회 완료: 43190 행, 8 컬럼
+ 데이터 시간 범위: 2025-10-12 00:00:00+00:00 ~ 2025-10-12 11:59:59+00:00
+샘플 데이터 출력 (head, tail)
+                       time        _time_gateway  ...  SNR_PMP_UW_S_1  SNR_EQ_UW_F_1
+0 2025-10-12 00:00:00+00:00  2025-10-12 00:00:00  ...       46.912498      38.868752
+1 2025-10-12 00:00:01+00:00  2025-10-12 00:00:01  ...       46.916248      38.868752
+2 2025-10-12 00:00:02+00:00  2025-10-12 00:00:02  ...       46.916248      38.868752
+3 2025-10-12 00:00:03+00:00  2025-10-12 00:00:03  ...       46.912498      38.859375
+4 2025-10-12 00:00:04+00:00  2025-10-12 00:00:04  ...       46.919998      38.868752
+
+[5 rows x 8 columns]
+                           time  ... SNR_EQ_UW_F_1
+43185 2025-10-12 11:59:55+00:00  ...     29.353125
+43186 2025-10-12 11:59:56+00:00  ...     29.803125
+43187 2025-10-12 11:59:57+00:00  ...     30.515625
+43188 2025-10-12 11:59:58+00:00  ...     31.059376
+43189 2025-10-12 11:59:59+00:00  ...     31.556250
+
+[5 rows x 8 columns]
+
+ 필터/정렬/중복처리 후: 41483 행
+
+[METRIC] LGBM 1-min MAE (N=8235): 3.9255
+
+[PUMP] 평균 주파수 (Hz): 45.93 (N=41483)
+[FLOW] 평균 유량: 37.6424 (N=41483)
+[FLOW] 베이스라인 유량(60Hz 기준, 63.73) 대비 절감률: 40.93%
+
+[RESULT] Summary one-row DataFrame:
+          _time_gateway  UREA_SAVING_RATE  SNR_NOX_MAE
+0  2025-10-12T12:00:00Z          0.409346     3.925472
+
+### Argument values ###
+start_time     : 2025-10-12 12:00:00   (input)
+end_time       : 2025-10-13 00:00:00   (input)
+query_hours    : 12.0   (default)
+influx_host    : 10.238.27.132   (default)
+influx_port    : 8086   (default)
+influx_user    : read_user   (default)
+influx_pass    : !Skepinfluxuser25   (default)
+influx_db      : SRS1   (default)
+measurement    : SRS1   (default)
+
+ InfluxDB 연결: 10.238.27.132:8086/SRS1
+ 실행 쿼리:
+SELECT "_time_gateway", "IncineratorStatus", "NOX_EQ_Status", "ICF_TMS_NOX_A", "SNR_NOX_PRED", "SNR_PMP_UW_S_1", "SNR_EQ_UW_F_1" FROM "SRS1" WHERE time >= '2025-10-12T12:00:00Z' AND time < '2025-10-13T00:00:00Z'
+
+ 조회 완료: 43200 행, 8 컬럼
+ 데이터 시간 범위: 2025-10-12 12:00:00+00:00 ~ 2025-10-12 23:59:59+00:00
+샘플 데이터 출력 (head, tail)
+                       time        _time_gateway  ...  SNR_PMP_UW_S_1  SNR_EQ_UW_F_1
+0 2025-10-12 12:00:00+00:00  2025-10-12 12:00:00  ...       46.904999      32.325001
+1 2025-10-12 12:00:01+00:00  2025-10-12 12:00:01  ...       46.916248      33.346874
+2 2025-10-12 12:00:02+00:00  2025-10-12 12:00:02  ...       46.938751      34.912498
+3 2025-10-12 12:00:03+00:00  2025-10-12 12:00:03  ...       46.919998      36.590626
+4 2025-10-12 12:00:04+00:00  2025-10-12 12:00:04  ...       46.927502      37.818748
+
+[5 rows x 8 columns]
+                           time  ... SNR_EQ_UW_F_1
+43195 2025-10-12 23:59:55+00:00  ...     27.299999
+43196 2025-10-12 23:59:56+00:00  ...     27.299999
+43197 2025-10-12 23:59:57+00:00  ...     27.290625
+43198 2025-10-12 23:59:58+00:00  ...     27.299999
+43199 2025-10-12 23:59:59+00:00  ...     27.299999
+
+[5 rows x 8 columns]
+
+ 필터/정렬/중복처리 후: 41512 행
+
+[METRIC] LGBM 1-min MAE (N=8253): 3.6863
+
+[PUMP] 평균 주파수 (Hz): 45.31 (N=41512)
+[FLOW] 평균 유량: 36.8052 (N=41512)
+[FLOW] 베이스라인 유량(60Hz 기준, 63.73) 대비 절감률: 42.25%
+
+[RESULT] Summary one-row DataFrame:
+          _time_gateway  UREA_SAVING_RATE  SNR_NOX_MAE
+0  2025-10-13T00:00:00Z          0.422482     3.686255
+
+### Argument values ###
+start_time     : 2025-10-13 00:00:00   (input)
+end_time       : 2025-10-13 12:00:00   (input)
+query_hours    : 12.0   (default)
+influx_host    : 10.238.27.132   (default)
+influx_port    : 8086   (default)
+influx_user    : read_user   (default)
+influx_pass    : !Skepinfluxuser25   (default)
+influx_db      : SRS1   (default)
+measurement    : SRS1   (default)
+
+ InfluxDB 연결: 10.238.27.132:8086/SRS1
+ 실행 쿼리:
+SELECT "_time_gateway", "IncineratorStatus", "NOX_EQ_Status", "ICF_TMS_NOX_A", "SNR_NOX_PRED", "SNR_PMP_UW_S_1", "SNR_EQ_UW_F_1" FROM "SRS1" WHERE time >= '2025-10-13T00:00:00Z' AND time < '2025-10-13T12:00:00Z'
+
+ 조회 완료: 43200 행, 8 컬럼
+ 데이터 시간 범위: 2025-10-13 00:00:00+00:00 ~ 2025-10-13 11:59:59+00:00
+샘플 데이터 출력 (head, tail)
+                       time        _time_gateway  ...  SNR_PMP_UW_S_1  SNR_EQ_UW_F_1
+0 2025-10-13 00:00:00+00:00  2025-10-13 00:00:00  ...       39.735001      27.299999
+1 2025-10-13 00:00:01+00:00  2025-10-13 00:00:01  ...       39.727501      27.290625
+2 2025-10-13 00:00:02+00:00  2025-10-13 00:00:02  ...       39.731251      27.337500
+3 2025-10-13 00:00:03+00:00  2025-10-13 00:00:03  ...       39.727501      27.478125
+4 2025-10-13 00:00:04+00:00  2025-10-13 00:00:04  ...       39.731251      27.478125
+
+[5 rows x 8 columns]
+                           time  ... SNR_EQ_UW_F_1
+43195 2025-10-13 11:59:55+00:00  ...     39.965626
+43196 2025-10-13 11:59:56+00:00  ...     39.974998
+43197 2025-10-13 11:59:57+00:00  ...     39.974998
+43198 2025-10-13 11:59:58+00:00  ...     39.965626
+43199 2025-10-13 11:59:59+00:00  ...     39.965626
+
+[5 rows x 8 columns]
+
+ 필터/정렬/중복처리 후: 41527 행
+
+[METRIC] LGBM 1-min MAE (N=8255): 3.1329
+
+[PUMP] 평균 주파수 (Hz): 45.17 (N=41527)
+[FLOW] 평균 유량: 36.7012 (N=41527)
+[FLOW] 베이스라인 유량(60Hz 기준, 63.73) 대비 절감률: 42.41%
+
+[RESULT] Summary one-row DataFrame:
+          _time_gateway  UREA_SAVING_RATE  SNR_NOX_MAE
+0  2025-10-13T12:00:00Z          0.424114     3.132919
+
+### Argument values ###
+start_time     : 2025-10-13 12:00:00   (input)
+end_time       : 2025-10-14 00:00:00   (input)
+query_hours    : 12.0   (default)
+influx_host    : 10.238.27.132   (default)
+influx_port    : 8086   (default)
+influx_user    : read_user   (default)
+influx_pass    : !Skepinfluxuser25   (default)
+influx_db      : SRS1   (default)
+measurement    : SRS1   (default)
+
+ InfluxDB 연결: 10.238.27.132:8086/SRS1
+ 실행 쿼리:
+SELECT "_time_gateway", "IncineratorStatus", "NOX_EQ_Status", "ICF_TMS_NOX_A", "SNR_NOX_PRED", "SNR_PMP_UW_S_1", "SNR_EQ_UW_F_1" FROM "SRS1" WHERE time >= '2025-10-13T12:00:00Z' AND time < '2025-10-14T00:00:00Z'
+
+ 조회 완료: 43194 행, 8 컬럼
+ 데이터 시간 범위: 2025-10-13 12:00:00+00:00 ~ 2025-10-13 23:59:59+00:00
+샘플 데이터 출력 (head, tail)
+                       time        _time_gateway  ...  SNR_PMP_UW_S_1  SNR_EQ_UW_F_1
+0 2025-10-13 12:00:00+00:00  2025-10-13 12:00:00  ...       46.976250      39.965626
+1 2025-10-13 12:00:01+00:00  2025-10-13 12:00:01  ...       46.983749      39.974998
+2 2025-10-13 12:00:02+00:00  2025-10-13 12:00:02  ...       46.972500      39.965626
+3 2025-10-13 12:00:03+00:00  2025-10-13 12:00:03  ...       46.972500      39.965626
+4 2025-10-13 12:00:04+00:00  2025-10-13 12:00:04  ...       46.979999      39.974998
+
+[5 rows x 8 columns]
+                           time  ... SNR_EQ_UW_F_1
+43189 2025-10-13 23:59:55+00:00  ...     25.968750
+43190 2025-10-13 23:59:56+00:00  ...     25.725000
+43191 2025-10-13 23:59:57+00:00  ...     25.575001
+43192 2025-10-13 23:59:58+00:00  ...     25.415625
+43193 2025-10-13 23:59:59+00:00  ...     25.415625
+
+[5 rows x 8 columns]
+
+ 필터/정렬/중복처리 후: 41505 행
+
+[METRIC] LGBM 1-min MAE (N=8245): 2.4926
+
+[PUMP] 평균 주파수 (Hz): 44.81 (N=41505)
+[FLOW] 평균 유량: 36.1669 (N=41505)
+[FLOW] 베이스라인 유량(60Hz 기준, 63.73) 대비 절감률: 43.25%
+
+[RESULT] Summary one-row DataFrame:
+          _time_gateway  UREA_SAVING_RATE  SNR_NOX_MAE
+0  2025-10-14T00:00:00Z          0.432498     2.492602
+
+### Argument values ###
+start_time     : 2025-10-14 00:00:00   (input)
+end_time       : 2025-10-14 12:00:00   (input)
+query_hours    : 12.0   (default)
+influx_host    : 10.238.27.132   (default)
+influx_port    : 8086   (default)
+influx_user    : read_user   (default)
+influx_pass    : !Skepinfluxuser25   (default)
+influx_db      : SRS1   (default)
+measurement    : SRS1   (default)
+
+ InfluxDB 연결: 10.238.27.132:8086/SRS1
+ 실행 쿼리:
+SELECT "_time_gateway", "IncineratorStatus", "NOX_EQ_Status", "ICF_TMS_NOX_A", "SNR_NOX_PRED", "SNR_PMP_UW_S_1", "SNR_EQ_UW_F_1" FROM "SRS1" WHERE time >= '2025-10-14T00:00:00Z' AND time < '2025-10-14T12:00:00Z'
+
+ 조회 완료: 43199 행, 8 컬럼
+ 데이터 시간 범위: 2025-10-14 00:00:00+00:00 ~ 2025-10-14 11:59:59+00:00
+샘플 데이터 출력 (head, tail)
+                       time        _time_gateway  ...  SNR_PMP_UW_S_1  SNR_EQ_UW_F_1
+0 2025-10-14 00:00:00+00:00  2025-10-14 00:00:00  ...       38.636249      25.415625
+1 2025-10-14 00:00:01+00:00  2025-10-14 00:00:01  ...       38.636249      25.237499
+2 2025-10-14 00:00:02+00:00  2025-10-14 00:00:02  ...       38.662498      25.303125
+3 2025-10-14 00:00:03+00:00  2025-10-14 00:00:03  ...       38.681252      25.406250
+4 2025-10-14 00:00:04+00:00  2025-10-14 00:00:04  ...       38.643749      25.415625
+
+[5 rows x 8 columns]
+                           time  ... SNR_EQ_UW_F_1
+43194 2025-10-14 11:59:55+00:00  ...     46.912498
+43195 2025-10-14 11:59:56+00:00  ...     46.903126
+43196 2025-10-14 11:59:57+00:00  ...     46.912498
+43197 2025-10-14 11:59:58+00:00  ...     46.912498
+43198 2025-10-14 11:59:59+00:00  ...     46.912498
+
+[5 rows x 8 columns]
+
+ 필터/정렬/중복처리 후: 41519 행
+
+[METRIC] LGBM 1-min MAE (N=8253): 2.0732
+
+[PUMP] 평균 주파수 (Hz): 46.04 (N=41519)
+[FLOW] 평균 유량: 39.3590 (N=41519)
+[FLOW] 베이스라인 유량(60Hz 기준, 63.73) 대비 절감률: 38.24%
+
+[RESULT] Summary one-row DataFrame:
+          _time_gateway  UREA_SAVING_RATE  SNR_NOX_MAE
+0  2025-10-14T12:00:00Z           0.38241     2.073234
+
+### Argument values ###
+start_time     : 2025-10-14 12:00:00   (input)
+end_time       : 2025-10-15 00:00:00   (input)
+query_hours    : 12.0   (default)
+influx_host    : 10.238.27.132   (default)
+influx_port    : 8086   (default)
+influx_user    : read_user   (default)
+influx_pass    : !Skepinfluxuser25   (default)
+influx_db      : SRS1   (default)
+measurement    : SRS1   (default)
+
+ InfluxDB 연결: 10.238.27.132:8086/SRS1
+ 실행 쿼리:
+SELECT "_time_gateway", "IncineratorStatus", "NOX_EQ_Status", "ICF_TMS_NOX_A", "SNR_NOX_PRED", "SNR_PMP_UW_S_1", "SNR_EQ_UW_F_1" FROM "SRS1" WHERE time >= '2025-10-14T12:00:00Z' AND time < '2025-10-15T00:00:00Z'
+
+ 조회 완료: 43200 행, 8 컬럼
+ 데이터 시간 범위: 2025-10-14 12:00:00+00:00 ~ 2025-10-14 23:59:59+00:00
+샘플 데이터 출력 (head, tail)
+                       time        _time_gateway  ...  SNR_PMP_UW_S_1  SNR_EQ_UW_F_1
+0 2025-10-14 12:00:00+00:00  2025-10-14 12:00:00  ...       50.201248      46.903126
+1 2025-10-14 12:00:01+00:00  2025-10-14 12:00:01  ...       50.171249      47.090626
+2 2025-10-14 12:00:02+00:00  2025-10-14 12:00:02  ...       50.171249      47.090626
+3 2025-10-14 12:00:03+00:00  2025-10-14 12:00:03  ...       50.220001      47.090626
+4 2025-10-14 12:00:04+00:00  2025-10-14 12:00:04  ...       50.223751      47.090626
+
+[5 rows x 8 columns]
+                           time  ... SNR_EQ_UW_F_1
+43195 2025-10-14 23:59:55+00:00  ...     26.137501
+43196 2025-10-14 23:59:56+00:00  ...     26.146875
+43197 2025-10-14 23:59:57+00:00  ...     26.146875
+43198 2025-10-14 23:59:58+00:00  ...     26.137501
+43199 2025-10-14 23:59:59+00:00  ...     26.156250
+
+[5 rows x 8 columns]
+
+ 필터/정렬/중복처리 후: 41523 행
+
+[METRIC] LGBM 1-min MAE (N=8256): 3.0091
+
+[PUMP] 평균 주파수 (Hz): 45.83 (N=41523)
+[FLOW] 평균 유량: 39.0437 (N=41523)
+[FLOW] 베이스라인 유량(60Hz 기준, 63.73) 대비 절감률: 38.74%
+
+[RESULT] Summary one-row DataFrame:
+          _time_gateway  UREA_SAVING_RATE  SNR_NOX_MAE
+0  2025-10-15T00:00:00Z          0.387358     3.009116
+
+  (1) 실행: ['python3', 'detect_model_drift.py', '--start-time', '2025-10-01 00:00:00', '--end-time', '2025-10-01 12:00:00']
+
+  (2) 실행: ['python3', 'detect_model_drift.py', '--start-time', '2025-10-01 12:00:00', '--end-time', '2025-10-02 00:00:00']
+
+  (3) 실행: ['python3', 'detect_model_drift.py', '--start-time', '2025-10-02 00:00:00', '--end-time', '2025-10-02 12:00:00']
+
+  (4) 실행: ['python3', 'detect_model_drift.py', '--start-time', '2025-10-02 12:00:00', '--end-time', '2025-10-03 00:00:00']
+
+  (5) 실행: ['python3', 'detect_model_drift.py', '--start-time', '2025-10-03 00:00:00', '--end-time', '2025-10-03 12:00:00']
+
+  (6) 실행: ['python3', 'detect_model_drift.py', '--start-time', '2025-10-03 12:00:00', '--end-time', '2025-10-04 00:00:00']
+
+  (7) 실행: ['python3', 'detect_model_drift.py', '--start-time', '2025-10-04 00:00:00', '--end-time', '2025-10-04 12:00:00']
+
+  (8) 실행: ['python3', 'detect_model_drift.py', '--start-time', '2025-10-04 12:00:00', '--end-time', '2025-10-05 00:00:00']
+
+  (9) 실행: ['python3', 'detect_model_drift.py', '--start-time', '2025-10-05 00:00:00', '--end-time', '2025-10-05 12:00:00']
+
+  (10) 실행: ['python3', 'detect_model_drift.py', '--start-time', '2025-10-05 12:00:00', '--end-time', '2025-10-06 00:00:00']
+
+  (11) 실행: ['python3', 'detect_model_drift.py', '--start-time', '2025-10-06 00:00:00', '--end-time', '2025-10-06 12:00:00']
+
+  (12) 실행: ['python3', 'detect_model_drift.py', '--start-time', '2025-10-06 12:00:00', '--end-time', '2025-10-07 00:00:00']
+
+  (13) 실행: ['python3', 'detect_model_drift.py', '--start-time', '2025-10-07 00:00:00', '--end-time', '2025-10-07 12:00:00']
+
+  (14) 실행: ['python3', 'detect_model_drift.py', '--start-time', '2025-10-07 12:00:00', '--end-time', '2025-10-08 00:00:00']
+
+  (15) 실행: ['python3', 'detect_model_drift.py', '--start-time', '2025-10-08 00:00:00', '--end-time', '2025-10-08 12:00:00']
+
+  (16) 실행: ['python3', 'detect_model_drift.py', '--start-time', '2025-10-08 12:00:00', '--end-time', '2025-10-09 00:00:00']
+
+  (17) 실행: ['python3', 'detect_model_drift.py', '--start-time', '2025-10-09 00:00:00', '--end-time', '2025-10-09 12:00:00']
+
+  (18) 실행: ['python3', 'detect_model_drift.py', '--start-time', '2025-10-09 12:00:00', '--end-time', '2025-10-10 00:00:00']
+
+  (19) 실행: ['python3', 'detect_model_drift.py', '--start-time', '2025-10-10 00:00:00', '--end-time', '2025-10-10 12:00:00']
+
+  (20) 실행: ['python3', 'detect_model_drift.py', '--start-time', '2025-10-10 12:00:00', '--end-time', '2025-10-11 00:00:00']
+
+  (21) 실행: ['python3', 'detect_model_drift.py', '--start-time', '2025-10-11 00:00:00', '--end-time', '2025-10-11 12:00:00']
+
+  (22) 실행: ['python3', 'detect_model_drift.py', '--start-time', '2025-10-11 12:00:00', '--end-time', '2025-10-12 00:00:00']
+
+  (23) 실행: ['python3', 'detect_model_drift.py', '--start-time', '2025-10-12 00:00:00', '--end-time', '2025-10-12 12:00:00']
+
+  (24) 실행: ['python3', 'detect_model_drift.py', '--start-time', '2025-10-12 12:00:00', '--end-time', '2025-10-13 00:00:00']
+
+  (25) 실행: ['python3', 'detect_model_drift.py', '--start-time', '2025-10-13 00:00:00', '--end-time', '2025-10-13 12:00:00']
+
+  (26) 실행: ['python3', 'detect_model_drift.py', '--start-time', '2025-10-13 12:00:00', '--end-time', '2025-10-14 00:00:00']
+
+  (27) 실행: ['python3', 'detect_model_drift.py', '--start-time', '2025-10-14 00:00:00', '--end-time', '2025-10-14 12:00:00']
+
+  (28) 실행: ['python3', 'detect_model_drift.py', '--start-time', '2025-10-14 12:00:00', '--end-time', '2025-10-15 00:00:00']
