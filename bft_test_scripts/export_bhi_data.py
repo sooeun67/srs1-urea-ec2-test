@@ -13,8 +13,13 @@ import argparse
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
-# 한글 폰트 설정
-plt.rcParams["font.family"] = "AppleGothic"
+# 한글 폰트 설정 (macOS: AppleGothic, Linux: NanumGothic)
+import platform
+
+if platform.system() == "Darwin":  # macOS
+    plt.rcParams["font.family"] = "AppleGothic"
+else:  # Linux (EC2)
+    plt.rcParams["font.family"] = "DejaVu Sans"
 plt.rcParams["axes.unicode_minus"] = False
 
 # 프로젝트 루트 디렉토리를 Python 경로에 추가
@@ -66,34 +71,18 @@ def plot_bhi_trend(df, output_file="bhi_trend.png"):
         label="BHI (BFT Health Index)",
     )
 
-    # 기준선 추가
-    ax.axhline(
-        y=80,
-        color="orange",
-        linestyle="--",
-        linewidth=1.5,
-        alpha=0.7,
-        label="주의 (80)",
-    )
-    ax.axhline(
-        y=90,
-        color="red",
-        linestyle="--",
-        linewidth=1.5,
-        alpha=0.7,
-        label="교체 권장 (90)",
-    )
-
-    # 평균선
-    mean_bhi = df_valid["BFT_BHI_VALUE"].mean()
-    ax.axhline(
-        y=mean_bhi,
-        color="green",
-        linestyle=":",
-        linewidth=2,
-        alpha=0.7,
-        label=f"평균 ({mean_bhi:.1f})",
-    )
+    # 각 데이터 포인트 위에 BHI 값 표시 (소수점 2자리)
+    for idx, row in df_valid.iterrows():
+        ax.text(
+            row["_time_gateway"],
+            row["BFT_BHI_VALUE"] + 1.5,  # 포인트 위쪽에 표시
+            f'{row["BFT_BHI_VALUE"]:.2f}',
+            ha="center",
+            va="bottom",
+            fontsize=9,
+            color="darkblue",
+            fontweight="bold",
+        )
 
     # 그래프 설정
     ax.set_xlabel("날짜 (UTC)", fontsize=12)
@@ -137,7 +126,7 @@ def plot_bhi_trend(df, output_file="bhi_trend.png"):
 
 
 def export_bhi_data(
-    hours=720,  # 기본 30일 (BHI는 하루 1번 계산 -> 30개 유효값)
+    hours=360,  # 기본 15일 (BHI는 하루 1번 계산 -> 15개 유효값)
     output_file=None,
     measurement="SRS1",
     host="10.238.24.150",  # 개발기
@@ -150,7 +139,7 @@ def export_bhi_data(
     BFT-BHI 데이터를 InfluxDB에서 CSV로 내보내기
 
     Args:
-        hours: 조회할 시간 범위 (시간 단위, 기본 720시간=30일)
+        hours: 조회할 시간 범위 (시간 단위, 기본 360시간=15일)
         output_file: 출력 파일명 (None이면 자동 생성)
         measurement: 측정값명
         host, port, username, password, database: InfluxDB 연결 정보
@@ -158,7 +147,7 @@ def export_bhi_data(
     Note:
         - BFT_BHI_VALUE는 하루 1번 계산됨
         - NULL 행은 자동 필터링하여 유효값만 저장
-        - 30일 조회 시 약 30개의 유효 BHI 값 추출
+        - 15일 조회 시 약 15개의 유효 BHI 값 추출
     """
 
     # BFT-BHI 관련 컬럼
@@ -353,8 +342,8 @@ def main():
     parser.add_argument(
         "--hours",
         type=float,
-        default=720,
-        help="조회할 시간 범위 (기본: 720시간=30일, BHI는 하루 1번 계산)",
+        default=360,
+        help="조회할 시간 범위 (기본: 360시간=15일, BHI는 하루 1번 계산)",
     )
     parser.add_argument("--output", "-o", help="출력 파일명 (기본: 자동 생성)")
     parser.add_argument(
