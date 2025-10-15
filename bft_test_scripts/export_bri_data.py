@@ -16,6 +16,7 @@ import matplotlib.dates as mdates
 
 # 한글 폰트 설정 (영어 라벨 사용으로 폰트 이슈 해결)
 import platform
+
 if platform.system() == "Darwin":  # macOS
     plt.rcParams["font.family"] = "AppleGothic"
 else:  # Linux (EC2)
@@ -33,7 +34,7 @@ from influxdb import InfluxDBClient
 
 def plot_bri_trend(df, output_file="bri_trend.png"):
     """BFT_BRI_VALUE 트렌드 시각화
-    
+
     Args:
         df: BRI 데이터프레임 (_time_gateway, BFT_BRI_VALUE 포함)
         output_file: 출력 이미지 파일명
@@ -41,39 +42,41 @@ def plot_bri_trend(df, output_file="bri_trend.png"):
     if df.empty or "BFT_BRI_VALUE" not in df.columns:
         print("⚠️ 시각화할 BRI 데이터가 없습니다.")
         return None
-    
+
     # 유효값만 필터링
     df_valid = df[df["BFT_BRI_VALUE"].notna()].copy()
-    
+
     if len(df_valid) == 0:
         print("⚠️ 유효한 BRI 값이 없어 시각화를 건너뜁니다.")
         return None
-    
+
     # _time_gateway를 datetime으로 변환
     if "_time_gateway" in df_valid.columns:
         df_valid["_time_gateway"] = pd.to_datetime(df_valid["_time_gateway"], utc=True)
         df_valid = df_valid.sort_values("_time_gateway")
     elif "BFT_BRI_TIMESTAMP" in df_valid.columns:
-        df_valid["_time_gateway"] = pd.to_datetime(df_valid["BFT_BRI_TIMESTAMP"], utc=True)
+        df_valid["_time_gateway"] = pd.to_datetime(
+            df_valid["BFT_BRI_TIMESTAMP"], utc=True
+        )
         df_valid = df_valid.sort_values("_time_gateway")
     else:
         print("⚠️ _time_gateway 또는 BFT_BRI_TIMESTAMP 컬럼이 없습니다.")
         return None
-    
+
     # 그래프 생성
     fig, ax = plt.subplots(1, 1, figsize=(16, 6))
-    
-    # BRI 트렌드 라인
+
+    # BRI 트렌드 라인 (빨간색)
     ax.plot(
         df_valid["_time_gateway"],
         df_valid["BFT_BRI_VALUE"],
         marker="o",
         linewidth=1.5,
         markersize=4,
-        color="steelblue",
+        color="red",
         label="BRI (Residual Index)",
     )
-    
+
     # 각 데이터 포인트 위에 BRI 값 표시 (소수점 2자리)
     # 10분 주기이므로 값이 많을 수 있음 - 일부만 표시
     step = max(1, len(df_valid) // 30)  # 최대 30개만 라벨 표시
@@ -86,14 +89,14 @@ def plot_bri_trend(df, output_file="bri_trend.png"):
                 ha="center",
                 va="bottom",
                 fontsize=7,
-                color="darkblue",
+                color="orange",
                 fontweight="bold",
             )
-    
+
     # 그래프 설정 (영어 라벨 사용)
     ax.set_xlabel("Date (UTC)", fontsize=12)
     ax.set_ylabel("BRI Value", fontsize=12)
-    
+
     date_range = f"{df_valid['_time_gateway'].min().strftime('%Y-%m-%d %H:%M')} ~ {df_valid['_time_gateway'].max().strftime('%Y-%m-%d %H:%M')}"
     ax.set_title(
         f"SRS1 Bag Filter Residual Index (BRI) Trend\n"
@@ -103,35 +106,37 @@ def plot_bri_trend(df, output_file="bri_trend.png"):
     )
     ax.grid(True, alpha=0.3)
     ax.legend(loc="upper left", fontsize=10)
-    
+
     # Y축 범위 설정 (BRI는 0-100 범위가 아닐 수 있음)
     y_margin = (df_valid["BFT_BRI_VALUE"].max() - df_valid["BFT_BRI_VALUE"].min()) * 0.1
     y_min = df_valid["BFT_BRI_VALUE"].min() - y_margin
     y_max = df_valid["BFT_BRI_VALUE"].max() + y_margin
     ax.set_ylim(y_min, y_max)
-    
+
     # X축 날짜 포맷
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%m/%d %H:%M"))
     ax.xaxis.set_major_locator(mdates.AutoDateLocator())
     plt.setp(ax.xaxis.get_majorticklabels(), rotation=45)
-    
+
     plt.tight_layout()
-    
+
     # 이미지 저장
     output_path = Path(output_file)
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
     plt.close()
-    
+
     print(f"\n📊 트렌드 그래프 저장: {output_path.absolute()}")
     print(f"   • 파일: {output_path.name}")
     print(f"   • 데이터 포인트: {len(df_valid)}개")
-    print(f"   • BRI 범위: {df_valid['BFT_BRI_VALUE'].min():.2f} ~ {df_valid['BFT_BRI_VALUE'].max():.2f}")
-    
+    print(
+        f"   • BRI 범위: {df_valid['BFT_BRI_VALUE'].min():.2f} ~ {df_valid['BFT_BRI_VALUE'].max():.2f}"
+    )
+
     return output_path
 
 
 def export_bri_data(
-    hours=72,  # 기본 3일 (BRI는 10분 주기 -> 3일 = 432개 유효값)
+    hours=168,  # 기본 7일 (BRI는 10분 주기 -> 7일 = 1,008개 유효값)
     output_file=None,
     measurement="SRS1",
     host="10.238.24.150",  # 개발기
@@ -144,14 +149,14 @@ def export_bri_data(
     BFT-BRI 데이터를 InfluxDB에서 CSV로 내보내기
 
     Args:
-        hours: 조회할 시간 범위 (시간 단위, 기본 72시간=3일)
+        hours: 조회할 시간 범위 (시간 단위, 기본 168시간=7일)
         output_file: 출력 파일명 (None이면 자동 생성)
         measurement: 측정값명
         host, port, username, password, database: InfluxDB 연결 정보
-        
+
     Note:
         - BFT_BRI_VALUE는 10분 주기로 계산됨
-        - 1시간 = 6개, 1일 = 144개, 3일 = 432개
+        - 1시간 = 6개, 1일 = 144개, 7일 = 1,008개
         - NULL 행은 자동 필터링하여 유효값만 저장
     """
 
@@ -317,7 +322,9 @@ def export_bri_data(
         print(f"\n🔄 GitHub을 통한 데이터 전송 방법:")
 
         if file_size_mb > 25:
-            print(f"   ⚠️ CSV 파일이 {file_size_mb:.1f}MB로 GitHub 제한(25MB)을 초과합니다.")
+            print(
+                f"   ⚠️ CSV 파일이 {file_size_mb:.1f}MB로 GitHub 제한(25MB)을 초과합니다."
+            )
             print(f"   💡 --hours 옵션으로 데이터 범위를 줄이세요.")
         else:
             files_to_add = [output_path.name]
@@ -347,8 +354,8 @@ def main():
     parser.add_argument(
         "--hours",
         type=float,
-        default=72,
-        help="조회할 시간 범위 (기본: 72시간=3일, BRI는 10분 주기로 계산)",
+        default=168,
+        help="조회할 시간 범위 (기본: 168시간=7일, BRI는 10분 주기로 계산)",
     )
     parser.add_argument("--output", "-o", help="출력 파일명 (기본: 자동 생성)")
     parser.add_argument(
@@ -372,4 +379,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
