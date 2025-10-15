@@ -274,3 +274,37 @@ else:
             print("[FLOW] baseline_urea_flow_rate가 0이거나 유효하지 않아 절감률을 계산하지 않습니다.")
 
 
+
+#############################################
+########## 최종 요약 DataFrame (1행) #########
+#############################################
+
+# saving_rate / mae 가 계산되지 않았을 수도 있으니 안전하게 처리
+urea_saving = None
+if "saving_rate" in locals():
+    try:
+        urea_saving = float(saving_rate)
+    except Exception:
+        urea_saving = None
+
+mae_value = None
+if "mae" in locals():
+    try:
+        mae_value = float(mae)
+    except Exception:
+        mae_value = None
+
+# col_datetime(시간)는 분석 구간의 end_time 문자열(ISO8601 Z)로 기록
+summary_df = pd.DataFrame(
+    [{
+        col_datetime: end_time,                  # 예: '2025-10-15T12:00:00Z'
+        col_urea_saving_rate: urea_saving,       # float or None
+        col_snr_nox_mae: mae_value,              # float or None
+    }],
+    columns=[col_datetime, col_urea_saving_rate, col_snr_nox_mae]
+)
+
+print("\n[RESULT] Summary one-row DataFrame:")
+print(summary_df)
+
+
