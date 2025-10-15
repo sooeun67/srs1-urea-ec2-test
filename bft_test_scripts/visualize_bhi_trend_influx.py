@@ -82,12 +82,12 @@ def query_bhi_data(client, start_date=None, end_date=None):
 
     # 쿼리 작성 (BFT_BHI_VALUE가 존재하는 행만 조회 - InfluxDB 문법)
     # InfluxDB는 ORDER BY time만 지원하므로 time 기준으로 정렬
+    # 먼저 BFT_BHI_VALUE 조건 없이 조회 (디버깅용)
     if start_date:
         query = f"""
         SELECT _time_gateway, BFT_BHI_CODE, BFT_BHI_DATAQUALITY, BFT_BHI_DATASTATUS, BFT_BHI_VALUE
         FROM "{INFLUX_MEASUREMENT}"
         WHERE time >= '{start_str}' AND time <= {end_str}
-        AND BFT_BHI_VALUE != ''
         ORDER BY time ASC
         """
     else:
@@ -95,7 +95,6 @@ def query_bhi_data(client, start_date=None, end_date=None):
         SELECT _time_gateway, BFT_BHI_CODE, BFT_BHI_DATAQUALITY, BFT_BHI_DATASTATUS, BFT_BHI_VALUE
         FROM "{INFLUX_MEASUREMENT}"
         WHERE time >= {start_str} AND time <= {end_str}
-        AND BFT_BHI_VALUE != ''
         ORDER BY time ASC
         """
 
@@ -124,8 +123,23 @@ def query_bhi_data(client, start_date=None, end_date=None):
             print(f"🎯 BHI 관련 컬럼: {bhi_cols}")
         else:
             print("⚠️ BHI 관련 컬럼을 찾을 수 없습니다.")
-            print("📊 샘플 데이터 (처음 3행):")
-            print(df.head(3))
+
+        # 샘플 데이터 출력 (처음 5행)
+        print("\n📊 샘플 데이터 (처음 5행):")
+        print(df.head(5))
+
+        # BFT_BHI_VALUE 값 분포 확인
+        if "BFT_BHI_VALUE" in df.columns:
+            print(f"\n📈 BFT_BHI_VALUE 통계:")
+            print(f"   - 총 행 수: {len(df)}")
+            print(f"   - NULL 개수: {df['BFT_BHI_VALUE'].isnull().sum()}")
+            print(f"   - 비어있는 문자열: {(df['BFT_BHI_VALUE'] == '').sum()}")
+            print(f"   - 0 값: {(df['BFT_BHI_VALUE'] == 0).sum()}")
+            print(f"   - 유효값 개수: {df['BFT_BHI_VALUE'].notna().sum()}")
+            if df["BFT_BHI_VALUE"].notna().sum() > 0:
+                print(
+                    f"   - 유효값 범위: {df['BFT_BHI_VALUE'].min()} ~ {df['BFT_BHI_VALUE'].max()}"
+                )
 
         return df
 
