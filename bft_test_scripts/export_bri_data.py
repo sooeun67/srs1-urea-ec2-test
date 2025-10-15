@@ -99,9 +99,9 @@ def plot_bri_trend(df, output_file="bri_trend.png"):
     y_max = df_valid["BFT_BRI_VALUE"].max() + y_margin
     ax.set_ylim(y_min, y_max)
 
-    # X축 날짜 포맷
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%m/%d %H:%M"))
-    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+    # X축 날짜 포맷 (매일 표시)
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%m/%d"))
+    ax.xaxis.set_major_locator(mdates.DayLocator(interval=1))
     plt.setp(ax.xaxis.get_majorticklabels(), rotation=45)
 
     plt.tight_layout()
