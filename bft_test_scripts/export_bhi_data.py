@@ -21,7 +21,7 @@ from influxdb import InfluxDBClient
 
 
 def export_bhi_data(
-    hours=24,  # 기본 1일 (초단위 수집으로 1일=86,400행)
+    hours=480,  # 기본 20일 (BHI는 하루 1번 계산 -> 20개 유효값)
     output_file=None,
     measurement="SRS1",
     host="10.238.24.150",  # 개발기
@@ -34,16 +34,15 @@ def export_bhi_data(
     BFT-BHI 데이터를 InfluxDB에서 CSV로 내보내기
 
     Args:
-        hours: 조회할 시간 범위 (시간 단위, 기본 24시간=1일)
+        hours: 조회할 시간 범위 (시간 단위, 기본 480시간=20일)
         output_file: 출력 파일명 (None이면 자동 생성)
         measurement: 측정값명
         host, port, username, password, database: InfluxDB 연결 정보
 
     Note:
-        InfluxDB는 초단위로 데이터 수집
-        - 1시간 = 3,600행
-        - 1일 = 86,400행
-        - 30일 = 2,592,000행 (조회 시간 오래 걸림)
+        - BFT_BHI_VALUE는 하루 1번 계산됨
+        - NULL 행은 자동 필터링하여 유효값만 저장
+        - 20일 조회 시 약 20개의 유효 BHI 값 추출
     """
 
     # BFT-BHI 관련 컬럼
@@ -112,7 +111,7 @@ def export_bhi_data(
             df["time"] = pd.to_datetime(df["time"])
             print(f"📅 데이터 시간 범위: {df['time'].min()} ~ {df['time'].max()}")
 
-        # BFT_BHI_VALUE 통계
+        # BFT_BHI_VALUE 통계 (필터링 전)
         if "BFT_BHI_VALUE" in df.columns:
             print(f"\n📈 BFT_BHI_VALUE 통계:")
             total_rows = len(df)
@@ -128,6 +127,20 @@ def export_bhi_data(
                     f"   - 유효값 범위: {df['BFT_BHI_VALUE'].min():.2f} ~ {df['BFT_BHI_VALUE'].max():.2f}"
                 )
                 print(f"   - 평균: {df['BFT_BHI_VALUE'].mean():.2f}")
+
+        # BFT_BHI_VALUE가 NULL인 행 필터링 (유효값만 남김)
+        if "BFT_BHI_VALUE" in df.columns:
+            df_filtered = df[df["BFT_BHI_VALUE"].notna()].copy()
+
+            if len(df_filtered) == 0:
+                print("\n⚠️ BFT_BHI_VALUE 유효값이 없습니다. 전체 데이터를 저장합니다.")
+                df_filtered = df
+            else:
+                print(f"\n🔍 NULL 행 필터링:")
+                print(f"   - 필터링 전: {len(df):,} 행")
+                print(f"   - 필터링 후: {len(df_filtered):,} 행 (유효값만)")
+                print(f"   - 제거된 행: {len(df) - len(df_filtered):,} 행")
+                df = df_filtered
 
         # 출력 파일명 생성
         if output_file is None:
@@ -182,8 +195,8 @@ def main():
     parser.add_argument(
         "--hours",
         type=float,
-        default=24,
-        help="조회할 시간 범위 (기본: 24시간=1일, 1시간=3,600행)",
+        default=480,
+        help="조회할 시간 범위 (기본: 480시간=20일, BHI는 하루 1번 계산)",
     )
     parser.add_argument("--output", "-o", help="출력 파일명 (기본: 자동 생성)")
     parser.add_argument(
