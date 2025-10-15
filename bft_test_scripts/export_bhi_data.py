@@ -10,6 +10,12 @@ import pandas as pd
 from datetime import datetime, timedelta
 from pathlib import Path
 import argparse
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+
+# 한글 폰트 설정
+plt.rcParams["font.family"] = "AppleGothic"
+plt.rcParams["axes.unicode_minus"] = False
 
 # 프로젝트 루트 디렉토리를 Python 경로에 추가
 THIS_DIR = Path(__file__).resolve().parent
@@ -18,6 +24,116 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from influxdb import InfluxDBClient
+
+
+def plot_bhi_trend(df, output_file="bhi_trend.png"):
+    """BFT_BHI_VALUE 트렌드 시각화
+
+    Args:
+        df: BHI 데이터프레임 (_time_gateway, BFT_BHI_VALUE 포함)
+        output_file: 출력 이미지 파일명
+    """
+    if df.empty or "BFT_BHI_VALUE" not in df.columns:
+        print("⚠️ 시각화할 BHI 데이터가 없습니다.")
+        return None
+
+    # 유효값만 필터링
+    df_valid = df[df["BFT_BHI_VALUE"].notna()].copy()
+
+    if len(df_valid) == 0:
+        print("⚠️ 유효한 BHI 값이 없어 시각화를 건너뜁니다.")
+        return None
+
+    # _time_gateway를 datetime으로 변환
+    if "_time_gateway" in df_valid.columns:
+        df_valid["_time_gateway"] = pd.to_datetime(df_valid["_time_gateway"], utc=True)
+        df_valid = df_valid.sort_values("_time_gateway")
+    else:
+        print("⚠️ _time_gateway 컬럼이 없습니다.")
+        return None
+
+    # 그래프 생성
+    fig, ax = plt.subplots(1, 1, figsize=(14, 6))
+
+    # BHI 트렌드 라인
+    ax.plot(
+        df_valid["_time_gateway"],
+        df_valid["BFT_BHI_VALUE"],
+        marker="o",
+        linewidth=2,
+        markersize=8,
+        color="steelblue",
+        label="BHI (BFT Health Index)",
+    )
+
+    # 기준선 추가
+    ax.axhline(
+        y=80,
+        color="orange",
+        linestyle="--",
+        linewidth=1.5,
+        alpha=0.7,
+        label="주의 (80)",
+    )
+    ax.axhline(
+        y=90,
+        color="red",
+        linestyle="--",
+        linewidth=1.5,
+        alpha=0.7,
+        label="교체 권장 (90)",
+    )
+
+    # 평균선
+    mean_bhi = df_valid["BFT_BHI_VALUE"].mean()
+    ax.axhline(
+        y=mean_bhi,
+        color="green",
+        linestyle=":",
+        linewidth=2,
+        alpha=0.7,
+        label=f"평균 ({mean_bhi:.1f})",
+    )
+
+    # 그래프 설정
+    ax.set_xlabel("날짜 (UTC)", fontsize=12)
+    ax.set_ylabel("BHI 값 (%)", fontsize=12)
+
+    date_range = f"{df_valid['_time_gateway'].min().strftime('%Y-%m-%d')} ~ {df_valid['_time_gateway'].max().strftime('%Y-%m-%d')}"
+    ax.set_title(
+        f"SRS1 백필터 건강도 지수 (BHI) 트렌드\n"
+        f"기간(UTC): {date_range} ({len(df_valid)}일)",
+        fontsize=14,
+        fontweight="bold",
+    )
+    ax.grid(True, alpha=0.3)
+    ax.legend(loc="upper left", fontsize=10)
+
+    # Y축 범위 설정
+    y_min = max(0, df_valid["BFT_BHI_VALUE"].min() - 10)
+    y_max = min(100, df_valid["BFT_BHI_VALUE"].max() + 10)
+    ax.set_ylim(y_min, y_max)
+
+    # X축 날짜 포맷
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%m/%d"))
+    ax.xaxis.set_major_locator(mdates.DayLocator(interval=max(1, len(df_valid) // 15)))
+    plt.setp(ax.xaxis.get_majorticklabels(), rotation=45)
+
+    plt.tight_layout()
+
+    # 이미지 저장
+    output_path = Path(output_file)
+    plt.savefig(output_path, dpi=300, bbox_inches="tight")
+    plt.close()
+
+    print(f"📊 트렌드 그래프 저장: {output_path.absolute()}")
+    print(f"   • 파일: {output_path.name}")
+    print(f"   • 데이터 포인트: {len(df_valid)}개")
+    print(
+        f"   • BHI 범위: {df_valid['BFT_BHI_VALUE'].min():.2f} ~ {df_valid['BFT_BHI_VALUE'].max():.2f}"
+    )
+
+    return output_path
 
 
 def export_bhi_data(
@@ -164,18 +280,30 @@ def export_bhi_data(
         print(f"   • 행 수: {len(df):,}")
         print(f"   • 컬럼 수: {len(df.columns)}")
 
+        # BHI 트렌드 시각화
+        print(f"\n📊 BHI 트렌드 시각화 중...")
+        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        plot_file = f"bhi_trend_{timestamp}_{hours}h.png"
+        plot_path = plot_bhi_trend(df, output_file=plot_file)
+
         # GitHub을 통한 데이터 전송 안내
         file_size_mb = output_path.stat().st_size / (1024 * 1024)
         print(f"\n🔄 GitHub을 통한 데이터 전송 방법:")
 
         if file_size_mb > 25:
-            print(f"   ⚠️ 파일이 {file_size_mb:.1f}MB로 GitHub 제한(25MB)을 초과합니다.")
+            print(
+                f"   ⚠️ CSV 파일이 {file_size_mb:.1f}MB로 GitHub 제한(25MB)을 초과합니다."
+            )
             print(f"   💡 --hours 옵션으로 데이터 범위를 줄이세요.")
         else:
-            print(f"   1. git add {output_path.name}")
-            print(f"   2. git commit -m 'Add BHI data: {output_path.name}'")
+            files_to_add = [output_path.name]
+            if plot_path:
+                files_to_add.append(plot_path.name)
+
+            print(f"   1. git add {' '.join(files_to_add)}")
+            print(f"   2. git commit -m 'Add BHI data and trend: {output_path.name}'")
             print(f"   3. git push origin main")
-            print(f"   4. 로컬에서 git pull origin main 후 {output_path.name} 사용")
+            print(f"   4. 로컬에서 git pull origin main 후 파일 사용")
 
         return output_path
 
