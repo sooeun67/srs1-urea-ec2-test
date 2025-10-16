@@ -71,12 +71,12 @@ def plot_bhi_trend(df, output_file="bhi_trend_srdd.png"):
         label="BHI (BFT Health Index)",
     )
 
-    # 각 데이터 포인트 위에 BHI 값 표시 (소수점 2자리)
+    # 각 데이터 포인트 위에 BHI 값 표시 (소수점 1자리)
     for idx, row in df_valid.iterrows():
         ax.text(
             row["_time_gateway"],
             row["BFT_BHI_VALUE"] + 1.5,  # 포인트 위쪽에 표시
-            f'{row["BFT_BHI_VALUE"]:.2f}',
+            f'{row["BFT_BHI_VALUE"]:.1f}',
             ha="center",
             va="bottom",
             fontsize=9,
@@ -102,6 +102,34 @@ def plot_bhi_trend(df, output_file="bhi_trend_srdd.png"):
     y_min = max(0, df_valid["BFT_BHI_VALUE"].min() - 10)
     y_max = min(100, df_valid["BFT_BHI_VALUE"].max() + 10)
     ax.set_ylim(y_min, y_max)
+
+    # TA 기간 배경색 추가 (10/07~10/11)
+    if not df_valid.empty:
+        # 날짜 범위 확인
+        min_date = df_valid["_time_gateway"].min()
+        max_date = df_valid["_time_gateway"].max()
+        
+        # 2025년 10월 7일~11일 UTC 기간
+        ta_start = pd.Timestamp("2025-10-07 00:00:00", tz="UTC")
+        ta_end = pd.Timestamp("2025-10-11 23:59:59", tz="UTC")
+        
+        # 그래프 날짜 범위와 TA 기간이 겹치는 경우에만 표시
+        if ta_start <= max_date and ta_end >= min_date:
+            # 실제 표시할 TA 기간 계산
+            display_ta_start = max(ta_start, min_date)
+            display_ta_end = min(ta_end, max_date)
+            
+            # 옅은 주황색 배경 추가
+            ax.axvspan(
+                display_ta_start, 
+                display_ta_end, 
+                alpha=0.2, 
+                color="orange", 
+                label="TA Period (10/07-10/11)"
+            )
+            
+            # 범례에 TA 기간 추가
+            ax.legend(loc="upper left", fontsize=10)
 
     # X축 날짜 포맷 (매일 표시)
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%m/%d"))
