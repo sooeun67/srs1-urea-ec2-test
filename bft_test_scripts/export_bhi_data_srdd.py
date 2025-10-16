@@ -279,6 +279,22 @@ def export_bhi_data(
                 print(f"   - 제거된 행: {len(df) - len(df_filtered):,} 행")
                 df = df_filtered
 
+        # 각 날짜별 마지막 값만 유지 (테스트로 인한 중복 제거)
+        if "_time_gateway" in df.columns and "BFT_BHI_VALUE" in df.columns:
+            print(f"\n🔍 날짜별 마지막 값 필터링 (중복 제거):")
+            df["_time_gateway"] = pd.to_datetime(df["_time_gateway"], utc=True)
+            df["date_only"] = df["_time_gateway"].dt.date
+
+            # 각 날짜별 마지막 값만 유지
+            df_last_per_day = df.groupby("date_only").last().reset_index()
+            df_last_per_day = df_last_per_day.drop("date_only", axis=1)
+
+            print(f"   - 필터링 전: {len(df):,} 행")
+            print(f"   - 필터링 후: {len(df_last_per_day):,} 행 (날짜별 마지막 값)")
+            print(f"   - 제거된 행: {len(df) - len(df_last_per_day):,} 행")
+
+            df = df_last_per_day
+
         # 출력 파일명 생성
         if output_file is None:
             timestamp = now.strftime("%Y%m%d_%H%M%S")
