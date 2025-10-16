@@ -42,8 +42,8 @@ col_urea_flow = 'SNR_EQ_UW_F_1'
 cols_select = [col_datetime, col_inc_status, col_nox_eq_status, col_nox, col_lgbm_db_pred_nox, col_urea_pump, col_urea_flow]
 
 # DB에 update할 output column 목록
-col_urea_saving_rate = 'UREA_SAVING_RATE'
-col_snr_nox_mae = 'SNR_NOX_MAE'
+col_urea_saving_rate = 'SNR_UREA_SAVING_RATE'
+col_snr_nox_mae = 'SNR_NOX_PRED_MAE'
 
 
 
