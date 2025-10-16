@@ -354,10 +354,11 @@ if "mae" in locals():
     except Exception:
         mae_value = None
 
-# col_datetime(시간)는 분석 구간의 end_time 문자열(ISO8601 Z)로 기록
+#  end_time 포맷 변환
+end_time_str = pd.to_datetime(end_time).strftime("%Y-%m-%d %H:%M:%S")
 summary_df = pd.DataFrame(
     [{
-        col_datetime: end_time,                  # 예: '2025-10-15T12:00:00Z'
+        col_datetime: end_time_str,              # 예: '2025-10-15 12:00:00':
         col_urea_saving_rate: urea_saving,       # float or None
         col_snr_nox_mae: mae_value,              # float or None
     }],
