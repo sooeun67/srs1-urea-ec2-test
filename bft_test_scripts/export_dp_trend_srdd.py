@@ -231,7 +231,6 @@ def export_dp_data(
         SELECT LAST("BFT_EQ_FG_DP_1") as "BFT_EQ_FG_DP_1"
         FROM "{measurement}" 
         WHERE time >= '{start_utc}' AND time <= '{end_utc}'
-        AND "BFT_EQ_FG_DP_1" != ''
         GROUP BY time(5s)
         ORDER BY time ASC
         """
