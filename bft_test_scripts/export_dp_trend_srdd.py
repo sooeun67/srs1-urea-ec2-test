@@ -209,7 +209,7 @@ def export_dp_data(
         print(f"🔧 Environment: Development (개발기)")
         print(f"📈 Purpose: BHI 상승 원인 분석을 위한 차압 패턴 확인")
 
-        # 시간 범위 설정
+        # 시간 범위 설정 (최근 데이터가 없을 수 있으므로 더 넓은 범위로 조회)
         now = datetime.utcnow()
         start_time = now - timedelta(hours=hours)
 

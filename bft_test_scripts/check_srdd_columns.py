@@ -76,7 +76,7 @@ def check_srdd_columns():
 
         # 가능한 차압 컬럼명들
         dp_columns = [
-            "BFT_EQ_FG_DP" "BFT_EQ_FG_DP_1",
+            "BFT_EQ_FG_DP_1",
             "BFT_DP_1",
             "BFT_DIFF_PRESSURE_1",
             "DP_1",
