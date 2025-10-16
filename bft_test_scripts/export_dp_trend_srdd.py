@@ -159,7 +159,8 @@ Std: {df_valid['BFT_EQ_FG_DP_1'].std():.1f} Pa"""
 
 
 def export_dp_data(
-    hours=720,  # 기본 30일 (차압은 초단위로 많이 수집됨)
+    start_date="2025-09-02",  # 시작 날짜 (YYYY-MM-DD)
+    end_date="2025-10-16",  # 종료 날짜 (YYYY-MM-DD)
     output_file=None,
     measurement="SRDD",
     host="10.238.24.150",  # SRDD 개발기
@@ -172,15 +173,16 @@ def export_dp_data(
     차압 데이터를 InfluxDB에서 CSV로 내보내기 (SRDD 플랜트)
 
     Args:
-        hours: 조회할 시간 범위 (시간 단위, 기본 720시간=30일)
+        start_date: 시작 날짜 (YYYY-MM-DD 형식, 기본: 2025-09-02)
+        end_date: 종료 날짜 (YYYY-MM-DD 형식, 기본: 2025-10-16)
         output_file: 출력 파일명 (None이면 자동 생성)
         measurement: 측정값명
         host, port, username, password, database: InfluxDB 연결 정보
 
     Note:
         - BFT_EQ_FG_DP_1은 초단위로 수집됨 (매우 많은 데이터)
-        - 30일 조회 시 수백만 행의 데이터 예상
-        - 메모리 효율을 위해 시간별 집계 후 일별 평균 계산
+        - 9월 2일~10월 16일 (44일) 조회 시 수백만 행의 데이터 예상
+        - 메모리 효율을 위해 5초 간격 LAST 값으로 조회
     """
 
     # 차압 관련 컬럼
@@ -209,17 +211,17 @@ def export_dp_data(
         print(f"🔧 Environment: Development (개발기)")
         print(f"📈 Purpose: BHI 상승 원인 분석을 위한 차압 패턴 확인")
 
-        # 시간 범위 설정 (최근 데이터가 없을 수 있으므로 더 넓은 범위로 조회)
-        now = datetime.utcnow()
-        start_time = now - timedelta(hours=hours)
+        # 시간 범위 설정 (특정 날짜 범위 지정)
+        start_utc = f"{start_date}T00:00:00Z"
+        end_utc = f"{end_date}T23:59:59Z"
 
-        start_utc = start_time.strftime("%Y-%m-%dT%H:%M:%SZ")
-        end_utc = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+        # 날짜 차이 계산
+        start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+        end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+        days_diff = (end_dt - start_dt).days + 1
 
-        print(
-            f"📅 조회 기간: {start_time.strftime('%Y-%m-%d %H:%M:%S')} ~ {now.strftime('%Y-%m-%d %H:%M:%S')} UTC"
-        )
-        print(f"📊 조회 범위: {hours}시간 ({hours/24:.1f}일)")
+        print(f"📅 조회 기간: {start_date} ~ {end_date} UTC")
+        print(f"📊 조회 범위: {days_diff}일")
 
         # 5초 간격으로 LAST 값 조회
         print(f"📌 5초 간격으로 LAST 값 조회...")
@@ -286,8 +288,8 @@ def export_dp_data(
 
         # 출력 파일명 생성
         if output_file is None:
-            timestamp = now.strftime("%Y%m%d_%H%M%S")
-            output_file = f"dp_data_srdd_{timestamp}_{hours}h.csv"
+            timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+            output_file = f"dp_data_srdd_{start_date.replace('-', '')}_{end_date.replace('-', '')}_{timestamp}.csv"
 
         # CSV 저장
         output_path = Path(output_file)
@@ -309,7 +311,7 @@ def export_dp_data(
         # 차압 트렌드 시각화
         print(f"\n📊 차압 트렌드 시각화 중...")
         timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-        plot_file = f"dp_trend_srdd_{timestamp}_{hours}h.png"
+        plot_file = f"dp_trend_srdd_{start_date.replace('-', '')}_{end_date.replace('-', '')}_{timestamp}.png"
         plot_path = plot_dp_trend(df, output_file=plot_file)
 
         # GitHub을 통한 데이터 전송 안내
@@ -349,10 +351,14 @@ def main():
     )
 
     parser.add_argument(
-        "--hours",
-        type=float,
-        default=720,
-        help="조회할 시간 범위 (기본: 720시간=30일)",
+        "--start-date",
+        default="2025-09-02",
+        help="시작 날짜 (YYYY-MM-DD 형식, 기본: 2025-09-02)",
+    )
+    parser.add_argument(
+        "--end-date",
+        default="2025-10-16",
+        help="종료 날짜 (YYYY-MM-DD 형식, 기본: 2025-10-16)",
     )
     parser.add_argument("--output", "-o", help="출력 파일명 (기본: 자동 생성)")
     parser.add_argument(
@@ -363,7 +369,8 @@ def main():
 
     # 차압 데이터 내보내기 실행
     result = export_dp_data(
-        hours=args.hours,
+        start_date=args.start_date,
+        end_date=args.end_date,
         output_file=args.output,
         measurement=args.measurement,
     )
