@@ -19,6 +19,7 @@ import argparse
 
 from datetime import datetime, timedelta
 from influxdb import InfluxDBClient
+import numpy as np
 import pandas as pd
 
 
@@ -238,6 +239,61 @@ else:
     abs_err = (aligned["pred"] - aligned["actual_tplus1"]).abs()
     mae = abs_err.mean()
     print(f"[METRIC] LGBM 1-min MAE (N={len(aligned)}): {mae:.4f}")
+
+
+
+#####################################################
+########## (참고) NOx 실제값 구간별 성능지표 ##########
+#####################################################
+print("")
+
+if len(aligned) == 0:
+    print("[BINNED] 정합된 표본이 없어 구간별 통계를 계산하지 않습니다.")
+else:
+    # aligned: index=time, columns=['pred','actual_tplus1']
+    df_eval = aligned.reset_index().rename(columns={"index": "time"})
+    df_eval = df_eval.rename(columns={"actual_tplus1": "target"})  # 실제값(t+1)을 target으로
+    # 필요 시 시간 컬럼 이름을 문서용으로 맞추고 싶으면 아래 라인 사용 (옵션)
+    # df_eval[col_datetime] = df_eval["time"]
+
+    # NOx 구간(bins) 정의: 예) 0~120 ppm을 10ppm 간격으로
+    # 범위를 데이터에 맞춰 유연하게 하려면 아래 두 줄로 자동 범위 산출 가능
+    lo = max(0, np.floor(df_eval["target"].min() // 10) * 10)
+    hi = np.ceil(df_eval["target"].max() / 10) * 10 + 10
+    bins = np.arange(lo, hi + 1e-9, 10)  # 10ppm 간격
+
+    df_eval["NOx_bin"] = pd.cut(df_eval["target"], bins=bins, right=False)
+
+    # 예측오차 계산에 쓸 편의 변수
+    err = df_eval["target"] - df_eval["pred"]
+    abs_err = err.abs()
+
+    # sMAPE 분모 0 안전처리
+    denom = (df_eval["target"].abs() + df_eval["pred"].abs()).replace(0, np.nan)
+
+    grouped = df_eval.groupby("NOx_bin", observed=False).apply(
+        lambda g: pd.Series({
+            "count": len(g),
+            "ME": (g["target"] - g["pred"]).mean(),                                        # Mean Error
+            "MAE": (g["target"] - g["pred"]).abs().mean(),                                 # Mean Abs Error
+            "RMSE": np.sqrt(((g["target"] - g["pred"])**2).mean()),                        # Root MSE
+            "sMAPE(%)": (2 * (g["target"] - g["pred"]).abs() / 
+                         (g["target"].abs() + g["pred"].abs()).replace(0, np.nan)).mean() * 100,
+            "pos_residual_count": (g["target"] - g["pred"] > 0).sum(),
+            "neg_residual_count": (g["target"] - g["pred"] < 0).sum(),
+            "pos_residual_ratio": (g["target"] - g["pred"] > 0).mean(),
+            "neg_residual_ratio": (g["target"] - g["pred"] < 0).mean(),
+        }),
+        include_groups=False
+    ).reset_index()
+
+    print("\n[BINNED] Performance by NOx(target) bins:")
+    # 보기 좋게 정렬
+    try:
+        grouped = grouped.sort_values(by="NOx_bin")
+    except Exception:
+        pass
+    print(grouped.to_string(index=False))
 
     
     
