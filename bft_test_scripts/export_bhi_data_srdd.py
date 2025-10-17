@@ -108,26 +108,26 @@ def plot_bhi_trend(df, output_file="bhi_trend_srdd.png"):
         # 날짜 범위 확인
         min_date = df_valid["_time_gateway"].min()
         max_date = df_valid["_time_gateway"].max()
-        
+
         # 2025년 10월 7일~11일 UTC 기간
         ta_start = pd.Timestamp("2025-10-07 00:00:00", tz="UTC")
         ta_end = pd.Timestamp("2025-10-11 23:59:59", tz="UTC")
-        
+
         # 그래프 날짜 범위와 TA 기간이 겹치는 경우에만 표시
         if ta_start <= max_date and ta_end >= min_date:
             # 실제 표시할 TA 기간 계산
             display_ta_start = max(ta_start, min_date)
             display_ta_end = min(ta_end, max_date)
-            
+
             # 옅은 주황색 배경 추가
             ax.axvspan(
-                display_ta_start, 
-                display_ta_end, 
-                alpha=0.2, 
-                color="orange", 
-                label="TA Period (10/07-10/11)"
+                display_ta_start,
+                display_ta_end,
+                alpha=0.2,
+                color="orange",
+                label="TA Period (10/07-10/11)",
             )
-            
+
             # 범례에 TA 기간 추가
             ax.legend(loc="upper left", fontsize=10)
 
