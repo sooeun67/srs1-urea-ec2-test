@@ -173,6 +173,9 @@ def main():
     )
     parser.add_argument("--output", "-o", help="출력 파일명 (기본: 자동 생성)")
     parser.add_argument(
+        "--database", "-d", default="SRS1", help="database (기본: SRS1)"
+    )
+    parser.add_argument(
         "--measurement", "-m", default="SRS1", help="측정값명 (기본: SRS1)"
     )
 
@@ -251,6 +254,10 @@ def main():
             # (EDIT; 2025-10-14) 소각로 상태 column 추가
             "IncineratorStatus"
         ]
+        # (EDIT; 2025-10-24) o2 column will be shifted for SRDD
+        if args.database == "SRDD":
+            columns = [x.replace("BR1_EO_O2_A", "BR1_EO_FG_A") if x == "BR1_EO_O2_A" else x for x in columns]
+            print("Warning: O2 column changed from 'BR1_EO_O2_A'(SRS1) to 'BR1_EO_FG_A'(SRDD).")
     else:
         columns = args.columns
 
@@ -308,6 +315,7 @@ def main():
             columns=columns,
             hours=args.hours,
             output_file=args.output,
+            database=args.database,
             measurement=args.measurement,
         )
 
