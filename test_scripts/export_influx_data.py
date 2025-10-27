@@ -256,8 +256,15 @@ def main():
         ]
         # (EDIT; 2025-10-24) o2 column will be shifted for SRDD
         if args.database == "SRDD":
+
             columns = [x.replace("BR1_EO_O2_A", "BR1_EO_FG_A") if x == "BR1_EO_O2_A" else x for x in columns]
             print("Warning: O2 column changed from 'BR1_EO_O2_A'(SRS1) to 'BR1_EO_FG_A'(SRDD).")
+            
+            # (EDIT; 2025-10-24) outer temp column will be shifted for SRDD
+            columns = [x.replace("ICF_SCS_FG_T_1", "ICF_SCS_FG_T_2") if x == "ICF_SCS_FG_T_1" else x for x in columns]
+            print("Warning: Outer temp column changed from 'ICF_SCS_FG_T_1'(SRDD) to 'ICF_SCS_FG_T_2'(SRDD).")
+
+            print(50 * '=')
     else:
         columns = args.columns
 
