@@ -32,7 +32,8 @@ import pandas as pd
 ########## 하드코딩 ###########
 ##############################
 
-baseline_urea_flow_rate = 63.73
+# 기본값 (예: 2025-10-30 새한 기준)
+# baseline_urea_flow_rate = 120  #  이 줄은 argument로 대체됨
 
 # DB에서 read할 input column 목록
 col_datetime = '_time_gateway'
@@ -43,12 +44,12 @@ col_lgbm_db_pred_nox = 'SNR_NOX_PRED'
 col_urea_pump = 'SNR_PMP_UW_S_1'
 col_urea_flow = 'SNR_EQ_UW_F_1'
 
-
-cols_select = [col_datetime, col_inc_status, col_nox_eq_status, col_nox, col_lgbm_db_pred_nox, col_urea_pump, col_urea_flow]
-
 # DB에 update할 output column 목록
 col_urea_saving_rate = 'SNR_UREA_SAVING_RATE'
 col_snr_nox_mae = 'SNR_NOX_PRED_MAE'
+
+
+cols_select = [col_datetime, col_inc_status, col_nox_eq_status, col_nox, col_lgbm_db_pred_nox, col_urea_pump, col_urea_flow]
 
 
 
@@ -82,13 +83,21 @@ parser.add_argument(
 )
 
 # DB 관련 정보
-# parser.add_argument("--influx-host", type=str, default="10.238.24.150") # 개발계
-parser.add_argument("--influx-host", type=str, default="10.238.27.132") # 운영계
+parser.add_argument("--influx-host", type=str, default="10.238.24.150") # 개발계
+# parser.add_argument("--influx-host", type=str, default="10.238.27.132") # 운영계
 parser.add_argument("--influx-port", type=int, default=8086)
 parser.add_argument("--influx-user", type=str, default="read_user")
 parser.add_argument("--influx-pass", type=str, default="!Skepinfluxuser25")
 parser.add_argument("--influx-db"  , type=str, default="SRS1")
 parser.add_argument("--measurement", type=str, default="SRS1")
+
+# (2025-10-30) baseline_urea_flow_rate 인자 추가
+parser.add_argument(
+    "--baseline-urea-flow-rate",
+    type=float,
+    default=120.0,
+    help="기준 요소수 유량 값 (예: 120.0)"
+)
 
 args = parser.parse_args()
 
@@ -102,6 +111,8 @@ for k, v in vars(args).items():
         print(f"{k:15s}: {v}   (default)")
     else:
         print(f"{k:15s}: {v}   (input)")
+
+baseline_urea_flow_rate = args.baseline_urea_flow_rate
 
 
 
@@ -358,11 +369,11 @@ if "mae" in locals():
     except Exception:
         mae_value = None
 
-#  end_time 포맷 변환
+# end_time 포맷 변환
 end_time_str = pd.to_datetime(end_time).strftime("%Y-%m-%d %H:%M:%S")
 summary_df = pd.DataFrame(
     [{
-        col_datetime: end_time_str,              # 예: '2025-10-15 12:00:00':
+        col_datetime: end_time_str,              # 예: '2025-10-15 12:00:00'
         col_urea_saving_rate: urea_saving,       # float or None
         col_snr_nox_mae: mae_value,              # float or None
     }],
