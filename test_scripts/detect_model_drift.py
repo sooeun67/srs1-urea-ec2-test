@@ -7,7 +7,10 @@
 - 평가 대상: 현재 예측값
 - (현재 예측값), (1분 뒤 실제값) 2개가 모두 있는 경우만 분석
 (2) 요소수 절감률 계산
-- 비교 대상: 60Hz 운영 시 유량 (상수값으로 고정, 별도 계산 과정 없음)
+- 비교 대상: 기본값 119L/h
+    - 기준 설정 기간: 새한(SRS1) 10월 5주차 수동 운전
+    - 상수값으로 고정, 별도 계산 과정 없음
+    - Hz: 56.7Hz로 고정 운전
 - 평가 대상: 평균 유량
 
 실행 예시
@@ -83,8 +86,8 @@ parser.add_argument(
 )
 
 # DB 관련 정보
-# parser.add_argument("--influx-host", type=str, default="10.238.24.150") # 개발계
-parser.add_argument("--influx-host", type=str, default="10.238.27.132") # 운영계
+parser.add_argument("--influx-host", type=str, default="10.238.24.150") # 개발계
+# parser.add_argument("--influx-host", type=str, default="10.238.27.132") # 운영계
 parser.add_argument("--influx-port", type=int, default=8086)
 parser.add_argument("--influx-user", type=str, default="read_user")
 parser.add_argument("--influx-pass", type=str, default="!Skepinfluxuser25")
@@ -95,8 +98,8 @@ parser.add_argument("--measurement", type=str, default="SRS1")
 parser.add_argument(
     "--baseline-urea-flow-rate",
     type=float,
-    default=120.0,
-    help="기준 요소수 유량 값 (예: 120.0)"
+    default=119.0,
+    help="기준 요소수 유량 값 (예: 119.0)"
 )
 
 args = parser.parse_args()
@@ -358,4 +361,4 @@ summary_df = pd.DataFrame(
 
 print("\n[RESULT] Summary one-row DataFrame:")
 print(summary_df)
-
+ 
