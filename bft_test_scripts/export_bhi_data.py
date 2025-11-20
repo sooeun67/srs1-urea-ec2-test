@@ -87,7 +87,7 @@ def plot_bhi_trend(df, output_file="bhi_trend.png"):
     # 그래프 설정 (영어 라벨 사용)
     ax.set_xlabel("Date (UTC)", fontsize=12)
     ax.set_ylabel("BHI Value (%)", fontsize=12)
-    
+
     date_range = f"{df_valid['_time_gateway'].min().strftime('%Y-%m-%d')} ~ {df_valid['_time_gateway'].max().strftime('%Y-%m-%d')}"
     ax.set_title(
         f"SRS1 Bag Filter Health Index (BHI) Trend\n"
